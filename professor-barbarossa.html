@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Barbarossa — Painel do Professor</title>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#111009;--surface:#1c1710;--surface2:#251e14;--border:#3d3020;--border2:#5a4830;--gold:#c8a84a;--gold2:#e6c96a;--red:#7a1515;--red2:#a02020;--text:#ede0c4;--muted:#8a7a60;--dim:#5a4e38;--green2:#4a8a3a}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;overflow:hidden}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px);pointer-events:none;z-index:9999}
+.hdr{display:flex;align-items:center;gap:12px;padding:8px 14px;background:var(--surface);border-bottom:1px solid var(--gold);flex-shrink:0}
+.hdr-left{display:flex;flex-direction:column;gap:1px}
+.hdr-sub{font-size:9px;color:var(--muted);letter-spacing:3px;text-transform:uppercase}
+.hdr-title{font-family:'Special Elite',serif;font-size:13px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase}
+.badge{background:var(--red);border:1px solid var(--red2);color:#ffaaaa;font-size:9px;padding:2px 7px;letter-spacing:2px}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.hdr-btn{background:transparent;border:1px solid var(--border2);color:var(--muted);font-size:9px;padding:3px 10px;cursor:pointer;font-family:inherit;letter-spacing:1px}
+.hdr-btn:hover{border-color:var(--gold);color:var(--gold)}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--green2);box-shadow:0 0 6px var(--green2);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.layout{display:flex;height:calc(100vh - 41px);overflow:hidden}
+.left-panel{width:270px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.main-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.right-panel{width:290px;flex-shrink:0;border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.panel-title{font-size:9px;color:var(--gold);letter-spacing:3px;padding:7px 11px;border-bottom:1px solid var(--border);text-transform:uppercase;background:var(--surface);flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+.panel-title::before{content:'//';color:var(--dim);margin-right:4px}
+.panel-scroll{flex:1;overflow-y:auto;padding:8px}
+.resumo-bar{display:flex;gap:0;padding:0;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+.resumo-item{display:flex;flex-direction:column;align-items:center;padding:7px 12px;border-right:1px solid var(--border)}
+.resumo-num{font-size:16px;font-weight:700;color:var(--gold);font-family:'Special Elite',serif}
+.resumo-label{font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:1px}
+.resumo-status{font-size:9px;color:var(--muted);padding:7px 12px;display:flex;align-items:center;gap:6px;margin-left:auto}
+.missao-bar{display:flex;gap:6px;padding:7px 10px;background:var(--surface2);border-bottom:1px solid var(--border);flex-shrink:0;align-items:center}
+.missao-input{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 8px;outline:none}
+.missao-input:focus{border-color:var(--gold)}
+.missao-btn{background:var(--gold);color:#0a0800;border:none;padding:5px 12px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:1px}
+.missao-btn:hover{background:var(--gold2)}
+.oficial-card{background:var(--surface);border:1px solid var(--border);padding:10px;margin-bottom:6px;cursor:pointer;transition:all 0.15s;position:relative}
+.oficial-card:hover{border-color:var(--border2)}
+.oficial-card.active{border-color:var(--gold)}
+.oficial-card.online::before{content:'';position:absolute;top:8px;right:8px;width:6px;height:6px;border-radius:50%;background:var(--green2);box-shadow:0 0 4px var(--green2)}
+.oficial-nome{font-size:11px;font-weight:600;color:var(--text);margin-bottom:3px}
+.oficial-delegado{font-size:10px;color:var(--gold);margin-bottom:2px}
+.oficial-ult{font-size:8px;color:var(--muted)}
+.feed-item{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--border);padding:8px 10px;margin-bottom:5px}
+.feed-item.mensagem{border-left-color:#4a7adc}
+.feed-item.diretiva{border-left-color:var(--gold)}
+.feed-item.resposta_diretiva{border-left-color:#c84a4a}
+.feed-item.jornal{border-left-color:#8a5adc}
+.feed-item.escolheu_delegado{border-left-color:var(--green2)}
+.feed-item.avancou_dia{border-left-color:var(--muted)}
+.feed-item.entrou{border-left-color:var(--green2)}
+.feed-item.resposta_ia{border-left-color:#5a4adc}
+.feed-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
+.feed-oficial{font-size:10px;font-weight:700;color:var(--gold)}
+.feed-tipo-badge{font-size:8px;padding:1px 6px;border:1px solid var(--border2);color:var(--muted);letter-spacing:1px}
+.feed-texto{font-size:9px;color:var(--text);line-height:1.5}
+.feed-time{font-size:8px;color:var(--dim);margin-top:2px}
+.detalhe-vazio{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted);text-align:center;gap:8px}
+.detalhe-header{background:var(--surface);border:1px solid var(--border);padding:10px;margin-bottom:8px}
+.detalhe-nome{font-family:'Special Elite',serif;font-size:13px;color:var(--gold);margin-bottom:3px}
+.detalhe-sub{font-size:9px;color:var(--muted)}
+.detalhe-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-top:8px}
+.d-stat{background:var(--surface2);border:1px solid var(--border);padding:6px;text-align:center}
+.d-stat-num{font-size:16px;font-weight:700;color:var(--gold)}
+.d-stat-label{font-size:8px;color:var(--muted);margin-top:1px;letter-spacing:1px;text-transform:uppercase}
+.ativ-item{background:var(--surface);border:1px solid var(--border);border-left:2px solid var(--border2);padding:7px 9px;margin-bottom:4px}
+.ativ-tipo{font-size:8px;color:var(--gold);margin-bottom:2px;letter-spacing:1px;text-transform:uppercase}
+.ativ-texto{font-size:9px;color:var(--text);line-height:1.5}
+.ativ-time{font-size:8px;color:var(--dim);margin-top:2px}
+.empty-msg{text-align:center;padding:24px;color:var(--muted);font-size:10px;line-height:1.7}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center}
+.modal-overlay.hidden{display:none}
+.modal{background:var(--surface);border:1px solid var(--gold);padding:24px;max-width:380px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.6)}
+.modal h2{font-family:'Special Elite',serif;color:var(--gold);font-size:15px;margin-bottom:8px;letter-spacing:1px}
+.modal p{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:12px}
+.modal input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:11px;padding:8px 10px;outline:none;margin-bottom:8px}
+.modal input:focus{border-color:var(--gold)}
+.modal-btn{width:100%;background:var(--gold);color:#0a0800;border:none;padding:9px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:2px;margin-top:4px}
+.modal-btn:hover{background:var(--gold2)}
+.modal-note{font-size:9px;color:var(--dim);margin-top:8px;text-align:center}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:1px}
+@media(max-width:900px){.right-panel{display:none}}
+</style>
+</head>
+<body>
+
+<div class="modal-overlay" id="modalSenha">
+  <div class="modal">
+    <h2>🔐 ACESSO RESTRITO</h2>
+    <p>Digite a senha do professor para acessar o painel de monitoramento da Operação Barbarossa.</p>
+    <input type="password" id="senhaInput" placeholder="Senha..." onkeydown="if(event.key==='Enter')verificarSenha()"/>
+    <button class="modal-btn" onclick="verificarSenha()">⚡ ACESSAR GABINETE</button>
+    <div class="modal-note">Senha padrão: <strong>barbarossa1941</strong> — altere no código</div>
+  </div>
+</div>
+
+<div class="hdr">
+  <div class="status-dot"></div>
+  <div class="hdr-left">
+    <div class="hdr-sub">Painel de Monitoramento · Operação Barbarossa</div>
+    <div class="hdr-title">Gabinete do Professor — Tempo Real</div>
+  </div>
+  <div class="badge">MONITORANDO</div>
+  <div class="hdr-right">
+    <span style="font-size:9px;color:var(--muted)" id="hdrMissao">Nenhuma missão</span>
+    <button class="hdr-btn" onclick="exportarRelatorio()">📊 EXPORTAR RELATÓRIO</button>
+  </div>
+</div>
+
+<div class="layout">
+
+  <div class="left-panel">
+    <div class="panel-title">
+      <span>Oficiais Ativos</span>
+      <span id="totalOficiais" style="background:var(--gold);color:#0a0800;font-size:8px;padding:2px 8px;letter-spacing:1px;font-weight:700">0</span>
+    </div>
+    <div class="missao-bar">
+      <input class="missao-input" type="text" id="missaoInput" placeholder="Código da missão (ex: missao-1941-A)" onkeydown="if(event.key==='Enter')conectarMissao()"/>
+      <button class="missao-btn" onclick="conectarMissao()">▶ MONITORAR</button>
+    </div>
+    <div class="panel-scroll" id="oficiaisList">
+      <div class="empty-msg">Digite o código da missão acima<br>e clique em Monitorar<br><br>Os alunos devem usar o mesmo<br>código ao entrar no simulador</div>
+    </div>
+  </div>
+
+  <div class="main-panel">
+    <div class="resumo-bar">
+      <div class="resumo-item"><div class="resumo-num" id="resumoOficiais">0</div><div class="resumo-label">Oficiais</div></div>
+      <div class="resumo-item"><div class="resumo-num" id="resumoMsgs">0</div><div class="resumo-label">Mensagens</div></div>
+      <div class="resumo-item"><div class="resumo-num" id="resumoDiretivas">0</div><div class="resumo-label">Diretivas</div></div>
+      <div class="resumo-item"><div class="resumo-num" id="resumoJornais">0</div><div class="resumo-label">Jornais</div></div>
+      <div class="resumo-status" id="resumoStatus">⚪ Aguardando missão</div>
+    </div>
+    <div class="panel-title"><span>Feed de Atividades em Tempo Real</span></div>
+    <div class="panel-scroll" id="feedAtividades">
+      <div class="empty-msg">📡 As atividades dos alunos aparecerão aqui<br>em tempo real assim que começarem</div>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="panel-title"><span>Detalhe do Oficial</span></div>
+    <div class="panel-scroll" id="detalheWrap">
+      <div class="detalhe-vazio">
+        <div style="font-size:24px">👆</div>
+        <div style="font-size:10px">Clique em um oficial<br>para ver o detalhamento</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, onSnapshot, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+const fb = initializeApp({
+  apiKey:"AIzaSyCOMmKs-WXGbx-CseFBaD7ISB6HZjBoamk",
+  authDomain:"barbarossa-mun.firebaseapp.com",
+  projectId:"barbarossa-mun",
+  storageBucket:"barbarossa-mun.firebasestorage.app",
+  messagingSenderId:"202509883011",
+  appId:"1:202509883011:web:ca0183d935366231b3adb6"
+});
+const db = getFirestore(fb);
+window._db = db;
+window._fbCol = collection;
+window._fbOnSnapshot = onSnapshot;
+window._fbQuery = query;
+window._fbOrderBy = orderBy;
+window._fbLimit = limit;
+window._fbReady = true;
+</script>
+
+<script>
+const SENHA = 'barbarossa1941';
+let missaoAtual = '';
+let unsubOficiais = null, unsubFeed = null;
+let dadosOficiais = {};
+let contadores = { msgs: 0, diretivas: 0, jornais: 0 };
+
+function verificarSenha() {
+  const s = document.getElementById('senhaInput').value;
+  if (s === SENHA) {
+    document.getElementById('modalSenha').classList.add('hidden');
+  } else {
+    document.getElementById('senhaInput').style.borderColor = '#c84a4a';
+    setTimeout(() => document.getElementById('senhaInput').style.borderColor = '', 1500);
+  }
+}
+
+function conectarMissao() {
+  const code = document.getElementById('missaoInput').value.trim();
+  if (!code) { alert('Digite o código da missão.'); return; }
+  missaoAtual = code;
+  document.getElementById('hdrMissao').textContent = 'MISSÃO: ' + code.toUpperCase();
+  document.getElementById('resumoStatus').innerHTML = '🟢 Monitorando: <strong>' + code + '</strong>';
+  contadores = { msgs: 0, diretivas: 0, jornais: 0 };
+  if (unsubOficiais) unsubOficiais();
+  if (unsubFeed) unsubFeed();
+  iniciarMonitoramento(code);
+}
+
+function iniciarMonitoramento(code) {
+  if (!window._fbReady) { setTimeout(() => iniciarMonitoramento(code), 500); return; }
+  const db = window._db;
+  const col = window._fbCol, onSnap = window._fbOnSnapshot, q = window._fbQuery, orderBy = window._fbOrderBy, lim = window._fbLimit;
+
+  unsubOficiais = onSnap(col(db, 'missoes', code, 'oficiais'), (snap) => {
+    dadosOficiais = {};
+    snap.forEach(doc => { dadosOficiais[doc.id] = doc.data(); });
+    renderOficiais();
+    document.getElementById('totalOficiais').textContent = snap.size;
+    document.getElementById('resumoOficiais').textContent = snap.size;
+  });
+
+  unsubFeed = onSnap(q(col(db, 'missoes', code, 'atividades'), orderBy('timestamp', 'desc'), lim(60)), (snap) => {
+    contadores = { msgs: 0, diretivas: 0, jornais: 0 };
+    const items = [];
+    snap.forEach(doc => {
+      const d = doc.data(); items.push(d);
+      if (d.tipo === 'mensagem') contadores.msgs++;
+      if (d.tipo === 'diretiva') contadores.diretivas++;
+      if (d.tipo === 'jornal') contadores.jornais++;
+    });
+    document.getElementById('resumoMsgs').textContent = contadores.msgs;
+    document.getElementById('resumoDiretivas').textContent = contadores.diretivas;
+    document.getElementById('resumoJornais').textContent = contadores.jornais;
+    renderFeed(items);
+  });
+}
+
+function renderOficiais() {
+  const list = document.getElementById('oficiaisList');
+  const oficiais = Object.values(dadosOficiais);
+  if (oficiais.length === 0) {
+    list.innerHTML = '<div class="empty-msg">⏳ Aguardando oficiais entrarem<br>na missão com o código:<br><strong>' + missaoAtual + '</strong></div>';
+    return;
+  }
+  list.innerHTML = '';
+  oficiais.forEach(a => {
+    const card = document.createElement('div');
+    card.className = 'oficial-card online';
+    card.onclick = () => mostrarDetalhe(a.nome);
+    const ts = a.timestamp?.toDate ? a.timestamp.toDate().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) : '—';
+    card.innerHTML = '<div class="oficial-nome">' + a.nome + '</div>'
+      + '<div class="oficial-delegado">⚔️ ' + (a.delegado_atual || '—') + '</div>'
+      + '<div class="oficial-ult">Última ação: ' + formatTipo(a.ultima_atividade || '—') + ' · ' + ts + '</div>';
+    list.appendChild(card);
+  });
+}
+
+function renderFeed(items) {
+  const feed = document.getElementById('feedAtividades');
+  if (items.length === 0) { feed.innerHTML = '<div class="empty-msg">📡 Nenhuma atividade registrada ainda</div>'; return; }
+  feed.innerHTML = '';
+  items.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'feed-item ' + (item.tipo || '');
+    const ts = item.timestamp?.toDate ? item.timestamp.toDate().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '';
+    let texto = '';
+    if (item.tipo === 'mensagem') texto = '<strong>Perguntou:</strong> ' + (item.texto || '').substring(0, 120);
+    else if (item.tipo === 'diretiva') texto = '<strong>Diretiva:</strong> ' + (item.assunto || '') + ' (' + (item.tipo_dir || '') + ')';
+    else if (item.tipo === 'resposta_diretiva') texto = '<strong>Resposta de ' + (item.respondente || '') + '</strong>';
+    else if (item.tipo === 'jornal') texto = '<strong>Jornal:</strong> ' + (item.veiculo || '') + (item.manchete ? ' — "' + (item.manchete || '').substring(0, 60) + '"' : '');
+    else if (item.tipo === 'escolheu_delegado') texto = '<strong>Escolheu delegado:</strong> ' + (item.delegado || '');
+    else if (item.tipo === 'avancou_dia') texto = '<strong>Avançou para Dia ' + (item.dia || '') + '</strong> — ' + (item.data || '');
+    else if (item.tipo === 'entrou') texto = '<strong>Entrou na missão</strong>';
+    else if (item.tipo === 'resposta_ia') texto = '<strong>Recebeu resposta de ' + (item.delegado || '') + '</strong>';
+    else texto = item.tipo || '';
+
+    div.innerHTML = '<div class="feed-header">'
+      + '<span class="feed-oficial">' + (item.oficial || '') + ' · ' + (item.delegado || '') + '</span>'
+      + '<span class="feed-tipo-badge">' + formatTipo(item.tipo) + '</span>'
+      + '</div>'
+      + '<div class="feed-texto">' + texto + '</div>'
+      + '<div class="feed-time">' + ts + '</div>';
+    feed.appendChild(div);
+  });
+}
+
+function mostrarDetalhe(nomeOficial) {
+  if (!window._fbReady) return;
+  const db = window._db;
+  const col = window._fbCol, onSnap = window._fbOnSnapshot, q = window._fbQuery, orderBy = window._fbOrderBy;
+  const wrap = document.getElementById('detalheWrap');
+  const a = Object.values(dadosOficiais).find(x => x.nome === nomeOficial);
+  if (!a) return;
+
+  onSnap(q(col(db, 'missoes', missaoAtual, 'atividades'), orderBy('timestamp', 'desc')), (snap) => {
+    const atividades = [];
+    let msgs = 0, diretivas = 0, jornais = 0;
+    snap.forEach(doc => {
+      const d = doc.data();
+      if (d.oficial === nomeOficial) {
+        atividades.push(d);
+        if (d.tipo === 'mensagem') msgs++;
+        if (d.tipo === 'diretiva') diretivas++;
+        if (d.tipo === 'jornal') jornais++;
+      }
+    });
+    const ts = a.timestamp?.toDate ? a.timestamp.toDate().toLocaleString('pt-BR') : '—';
+    let html = '<div class="detalhe-header">'
+      + '<div class="detalhe-nome">' + a.nome + '</div>'
+      + '<div class="detalhe-sub">Delegado: ' + (a.delegado_atual || '—') + ' · ' + ts + '</div>'
+      + '<div class="detalhe-stats">'
+      + '<div class="d-stat"><div class="d-stat-num">' + msgs + '</div><div class="d-stat-label">Msgs</div></div>'
+      + '<div class="d-stat"><div class="d-stat-num">' + diretivas + '</div><div class="d-stat-label">Diretivas</div></div>'
+      + '<div class="d-stat"><div class="d-stat-num">' + jornais + '</div><div class="d-stat-label">Jornais</div></div>'
+      + '</div></div>'
+      + '<div style="font-size:9px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">// Histórico</div>';
+
+    atividades.forEach(item => {
+      const ts2 = item.timestamp?.toDate ? item.timestamp.toDate().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) : '';
+      let txt = '';
+      if (item.tipo === 'mensagem') txt = '<strong>Perguntou:</strong> ' + (item.texto || '').substring(0, 200);
+      else if (item.tipo === 'diretiva') txt = '<strong>Diretiva:</strong> ' + (item.assunto || '') + '<br><span style="color:var(--muted);font-size:8px">' + (item.texto || '').substring(0, 300) + '</span>';
+      else if (item.tipo === 'jornal') txt = '<strong>Jornal:</strong> ' + (item.veiculo || '') + (item.manchete ? '<br>"' + item.manchete + '"' : '');
+      else if (item.tipo === 'escolheu_delegado') txt = '<strong>Escolheu:</strong> ' + (item.delegado || '');
+      else if (item.tipo === 'avancou_dia') txt = '<strong>Avançou para Dia ' + (item.dia || '') + '</strong> (' + (item.data || '') + ')';
+      else if (item.tipo === 'entrou') txt = '<strong>Entrou na missão</strong>';
+      else txt = item.tipo;
+
+      html += '<div class="ativ-item">'
+        + '<div class="ativ-tipo">' + formatTipo(item.tipo) + ' · ' + ts2 + '</div>'
+        + '<div class="ativ-texto">' + txt + '</div>'
+        + '</div>';
+    });
+    wrap.innerHTML = html;
+  });
+}
+
+function formatTipo(tipo) {
+  const map = {
+    mensagem: '💬 MSG', diretiva: '📜 DIRETIVA', resposta_diretiva: '↩️ RESPOSTA',
+    jornal: '📰 JORNAL', escolheu_delegado: '⚔️ DELEGADO', avancou_dia: '📅 DIA',
+    entrou: '🚪 ENTROU', resposta_ia: '🤖 IA', '—': '—'
+  };
+  return map[tipo] || tipo;
+}
+
+function exportarRelatorio() {
+  if (!missaoAtual) { alert('Conecte-se a uma missão primeiro.'); return; }
+  const oficiais = Object.values(dadosOficiais);
+  let html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Relatório Barbarossa — ' + missaoAtual + '</title>';
+  html += '<style>body{font-family:Georgia,serif;background:#f5f0e0;color:#1a1008;padding:24px;max-width:800px;margin:0 auto}h1{color:#0a0800;font-size:20px;border-bottom:2px solid #0a0800;padding-bottom:6px}h2{color:#3a2a10;font-size:14px;margin-top:16px;border-bottom:1px solid #ccc;padding-bottom:3px}table{width:100%;border-collapse:collapse;margin-top:8px}td,th{border:1px solid #ccc;padding:6px 10px;font-size:11px;text-align:left}th{background:#1a1008;color:#f5f0e0;font-family:monospace;letter-spacing:1px}.foot{margin-top:20px;font-size:9px;color:#888;text-align:center;border-top:1px solid #ccc;padding-top:8px}</style>';
+  html += '</head><body>';
+  html += '<h1>⚔️ RELATÓRIO DE SESSÃO — OPERAÇÃO BARBAROSSA</h1>';
+  html += '<p><strong>Missão:</strong> ' + missaoAtual + ' · <strong>Data:</strong> ' + new Date().toLocaleDateString('pt-BR') + ' · <strong>Oficiais:</strong> ' + oficiais.length + '</p>';
+  html += '<p><strong>Mensagens:</strong> ' + contadores.msgs + ' · <strong>Diretivas:</strong> ' + contadores.diretivas + ' · <strong>Jornais:</strong> ' + contadores.jornais + '</p>';
+  html += '<h2>Oficiais Participantes</h2><table><tr><th>Nome</th><th>Delegado</th><th>Última Atividade</th></tr>';
+  oficiais.forEach(a => {
+    const ts = a.timestamp?.toDate ? a.timestamp.toDate().toLocaleString('pt-BR') : '—';
+    html += '<tr><td>' + a.nome + '</td><td>' + (a.delegado_atual || '—') + '</td><td>' + ts + '</td></tr>';
+  });
+  html += '</table>';
+  html += '<div class="foot">Simulação educacional · Gabinete de Guerra · Operação Barbarossa · ' + new Date().toLocaleString('pt-BR') + '</div>';
+  html += '</body></html>';
+  const b = new Blob([html], {type:'text/html'});
+  const u = URL.createObjectURL(b);
+  const a = document.createElement('a'); a.href = u; a.download = 'Relatorio_Barbarossa_' + missaoAtual + '_' + new Date().toISOString().slice(0,10) + '.html';
+  a.style.display = 'none'; document.body.appendChild(a); a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(u); }, 1000);
+}
+</script>
+</body>
+</html>

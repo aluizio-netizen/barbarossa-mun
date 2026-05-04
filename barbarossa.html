@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Gabinete de Guerra — Operação Barbarossa</title>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#111009;--surface:#1c1710;--surface2:#251e14;--border:#3d3020;--border2:#5a4830;--gold:#c8a84a;--gold2:#e6c96a;--red:#7a1515;--red2:#a02020;--blue:#12304d;--blue2:#1a4a6e;--text:#ede0c4;--muted:#8a7a60;--dim:#5a4e38;--green:#1a3a18;--green2:#4a8a3a}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;overflow:hidden}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px);pointer-events:none;z-index:9999}
+.hdr{display:flex;align-items:center;gap:12px;padding:8px 14px;background:var(--surface);border-bottom:1px solid var(--gold);flex-shrink:0}
+.hdr-left{display:flex;flex-direction:column;gap:1px}
+.hdr-sub{font-size:9px;color:var(--muted);letter-spacing:3px;text-transform:uppercase}
+.hdr-title{font-family:'Special Elite',serif;font-size:13px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase}
+.badge{background:var(--red);border:1px solid var(--red2);color:#ffaaaa;font-size:9px;padding:2px 7px;letter-spacing:2px;animation:blink 2s step-end infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.6}}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.hdr-date{font-size:10px;color:var(--muted);letter-spacing:1px}
+.hdr-btn{background:transparent;border:1px solid var(--border2);color:var(--muted);font-size:9px;padding:3px 8px;cursor:pointer;font-family:inherit}
+.hdr-btn:hover{border-color:var(--gold);color:var(--gold)}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--green2);box-shadow:0 0 6px var(--green2);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.app{display:flex;height:calc(100vh - 41px);overflow:hidden}
+.sidebar{width:185px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.center{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.intel{width:220px;flex-shrink:0;border-left:1px solid var(--border);overflow-y:auto}
+.ptitle{font-size:9px;color:var(--gold);letter-spacing:3px;padding:7px 11px;border-bottom:1px solid var(--border);text-transform:uppercase;background:var(--surface);position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:6px}
+.ptitle::before{content:'//';color:var(--dim)}
+.tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.tab{flex:1;background:transparent;border:none;color:var(--muted);font-family:inherit;font-size:10px;padding:8px 4px;cursor:pointer;letter-spacing:1px;border-bottom:2px solid transparent;transition:all 0.15s;text-transform:uppercase}
+.tab:hover{color:var(--text)}.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.tabpanel{display:none;flex:1;flex-direction:column;overflow:hidden}.tabpanel.active{display:flex}
+.dlist{overflow-y:auto;flex:1;padding:6px}
+.dbtn{width:100%;text-align:left;background:transparent;border:1px solid var(--border);border-radius:2px;padding:7px 9px;cursor:pointer;color:var(--text);font-family:inherit;transition:all 0.15s;margin-bottom:4px;position:relative;overflow:hidden}
+.dbtn::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--gold);transform:scaleY(0);transition:transform 0.15s;transform-origin:bottom}
+.dbtn:hover{border-color:var(--border2);background:var(--surface2)}.dbtn:hover::before{transform:scaleY(1)}
+.dbtn.active{border-color:var(--gold);background:var(--surface2)}.dbtn.active::before{transform:scaleY(1)}
+.dbtn.soviet{border-color:#2a3a2a}.dbtn.soviet.active{border-color:#4a8a3a}.dbtn.soviet::before{background:var(--green2)}
+.dflag{font-size:14px;margin-bottom:2px}.dname{font-size:11px;font-weight:600;color:var(--text)}.drole{font-size:9px;color:var(--muted);margin-top:1px;letter-spacing:0.5px}
+.chatlog{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:88%}
+.msg.system{max-width:100%;background:rgba(200,168,74,0.05);border-left:2px solid var(--gold);padding:8px 11px;font-size:11px;color:var(--muted);line-height:1.6}
+.msg.user{align-self:flex-end;background:var(--blue2);border:1px solid #2a5a7a;border-radius:2px;padding:8px 11px}
+.msg.ai{align-self:flex-start;background:var(--surface2);border:1px solid var(--border);border-radius:2px;padding:8px 11px}
+.msg.ai.soviet-msg{border-color:#2a4a2a;background:#111a11}
+.msg.directive{max-width:100%;background:#0a140a;border:1px solid var(--gold);border-left:3px solid var(--gold2);padding:12px 14px}
+.msg.analysis{max-width:100%;background:#0d0d1a;border:1px solid #3a3a6a;border-left:3px solid #6a6aaa;padding:12px 14px}
+.msg.reply-dir{max-width:100%;background:#1a0a0a;border:1px solid #6a3a3a;border-left:3px solid #aa6a6a;padding:12px 14px}
+.mhdr{font-size:9px;color:var(--gold);margin-bottom:4px;letter-spacing:2px}.mhdr.soviet-hdr{color:var(--green2)}
+.mtext{font-size:11px;line-height:1.7;color:var(--text)}
+.typing{font-size:10px;color:var(--muted);padding:3px 12px;display:none;letter-spacing:1px}.typing.on{display:block}
+.inputrow{border-top:1px solid var(--border);padding:9px;display:flex;gap:7px;background:var(--surface);flex-shrink:0}
+.inputrow select{background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:10px;padding:5px 6px;font-family:inherit;cursor:pointer;outline:none}
+.msginput{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:11px;padding:6px 10px;font-family:inherit;outline:none;min-width:0}
+.msginput:focus{border-color:var(--gold)}.msginput::placeholder{color:var(--dim)}
+.sendbtn{background:var(--gold);color:#0a0800;border:none;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:1px;transition:background 0.15s}
+.sendbtn:hover{background:var(--gold2)}.sendbtn:disabled{opacity:0.35;cursor:not-allowed}
+.prob-block{margin:10px 0 4px}.prob-label{font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:5px;text-transform:uppercase}
+.prob-bar-wrap{background:#1a1a1a;border:1px solid var(--border);height:14px;position:relative;overflow:hidden}
+.prob-bar{height:100%;transition:width 1s ease;position:relative}
+.prob-bar::after{content:attr(data-pct);position:absolute;right:6px;top:0;line-height:14px;font-size:9px;color:#fff;font-weight:700}
+.prob-factors{margin-top:8px;display:flex;flex-direction:column;gap:3px}
+.pfactor{font-size:10px;display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(61,48,32,0.3)}.pfactor:last-child{border-bottom:none}
+.pf-val.pos{color:#5ab050}.pf-val.neg{color:#e05050}.pf-val.neu{color:var(--gold)}
+.reply-selector{background:var(--surface);border:1px solid var(--border);padding:10px;margin-top:6px}
+.reply-selector p{font-size:10px;color:var(--muted);margin-bottom:8px;letter-spacing:1px}
+.reply-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.reply-btn{background:transparent;border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:10px;padding:6px 8px;cursor:pointer;text-align:left;transition:all 0.15s}
+.reply-btn:hover{border-color:var(--gold);background:var(--surface2);color:var(--gold)}
+.pdf-btn{display:inline-flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--gold);color:var(--gold);font-family:inherit;font-size:10px;padding:5px 12px;cursor:pointer;margin-top:10px;transition:all 0.15s;letter-spacing:1px}
+.pdf-btn:hover{background:var(--gold);color:#0a0800}
+.dirform{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+.dfield{display:flex;flex-direction:column;gap:4px}
+.dfield label{font-size:9px;color:var(--gold);letter-spacing:2px;text-transform:uppercase}
+.dfield select,.dfield input,.dfield textarea{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:11px;padding:7px 9px;outline:none;width:100%;resize:vertical}
+.dfield select:focus,.dfield input:focus,.dfield textarea:focus{border-color:var(--gold)}
+.dfield textarea{min-height:80px;line-height:1.6}
+.dirbtn{width:100%;background:var(--gold);color:#0a0800;border:none;padding:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:2px;text-transform:uppercase;transition:background 0.15s;margin-top:4px}
+.dirbtn:hover{background:var(--gold2)}.dirbtn:disabled{opacity:0.35;cursor:not-allowed}
+.dirbtn.secondary{background:transparent;border:1px solid var(--border);color:var(--muted);margin-top:0}
+.dirbtn.secondary:hover{border-color:var(--gold);color:var(--text);background:var(--surface2)}
+.maptab{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.map-canvas-wrap{flex:1;position:relative;overflow:hidden;background:#0d1a0d}
+.map-controls{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+.map-btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-family:inherit;font-size:10px;padding:5px 10px;cursor:pointer;transition:all 0.15s;letter-spacing:1px}
+.map-btn:hover,.map-btn.active{border-color:var(--gold);color:var(--gold);background:var(--surface2)}
+.map-legend{display:flex;gap:12px;margin-left:auto;font-size:9px;color:var(--muted);align-items:center}
+.leg-item{display:flex;align-items:center;gap:4px}.leg-dot{width:8px;height:8px;border-radius:50%}
+.newspaper-wrap{display:flex;flex-direction:column;height:100%;overflow:hidden}
+.np-controls{display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+.np-side-btns{display:flex;gap:5px}
+.np-btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-family:inherit;font-size:9px;padding:4px 8px;cursor:pointer;transition:all 0.15s;letter-spacing:1px}
+.np-btn:hover,.np-btn.active{border-color:var(--gold);color:var(--gold);background:var(--surface2)}
+.np-generate-btn{background:var(--gold);color:#0a0800;border:none;padding:4px 10px;font-size:9px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:1px;margin-left:auto;transition:background 0.15s}
+.np-generate-btn:hover{background:var(--gold2)}.np-generate-btn:disabled{opacity:0.35;cursor:not-allowed}
+.newspaper-scroll{flex:1;overflow-y:auto;padding:10px;background:#1a1509}
+.np-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted);text-align:center}
+.np-edition{font-family:'Special Elite',serif;width:100%;background:#f5f0e0;color:#1a1008;box-shadow:0 2px 8px rgba(0,0,0,0.4)}
+.np-header{text-align:center;padding:5px 8px 4px;border-bottom:2px double #1a1008}
+.np-header-top{display:flex;justify-content:space-between;font-size:7px;letter-spacing:0.5px;color:#555;margin-bottom:3px;font-family:'Share Tech Mono',monospace}
+.np-masthead{font-size:13px;font-weight:900;letter-spacing:1px;line-height:1;text-transform:uppercase;color:#0a0800}
+.np-masthead.soviet{color:#8b0000}
+.np-subhead{font-size:7px;letter-spacing:1px;color:#555;margin-top:2px;font-family:'Share Tech Mono',monospace}
+.np-dateline{display:flex;justify-content:space-between;padding:2px 8px;border-bottom:1px solid #1a1008;border-top:1px solid #1a1008;font-family:'Share Tech Mono',monospace;font-size:7px;color:#555;margin-top:3px}
+.np-body{padding:6px 8px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.np-main-story{grid-column:1/-1;border-bottom:1px solid #aaa;padding-bottom:6px;margin-bottom:2px}
+.np-headline{font-size:12px;font-weight:900;line-height:1.2;text-transform:uppercase;color:#0a0800;margin-bottom:3px}
+.np-headline.soviet{color:#8b0000}
+.np-byline{font-size:7px;font-family:'Share Tech Mono',monospace;color:#777;margin-bottom:4px;letter-spacing:0.5px}
+.np-article{font-size:8px;line-height:1.5;color:#1a1008;text-align:justify;column-count:2;column-gap:10px}
+.np-side-story{border-right:1px solid #ccc;padding-right:8px}.np-side-story:last-child{border-right:none;padding-right:0}
+.np-side-headline{font-size:9px;font-weight:900;text-transform:uppercase;line-height:1.2;color:#0a0800;margin-bottom:3px;border-top:1px solid #1a1008;padding-top:4px}
+.np-side-headline.soviet{color:#8b0000}
+.np-side-text{font-size:8px;line-height:1.4;color:#1a1008;text-align:justify}
+.np-propaganda{grid-column:1/-1;background:#0a0800;color:#f5f0e0;padding:5px 8px;text-align:center;margin-top:2px}
+.np-propaganda.soviet{background:#8b0000}
+.np-propaganda-text{font-size:9px;font-weight:900;letter-spacing:1px;text-transform:uppercase;line-height:1.3}
+.np-propaganda-sub{font-size:7px;letter-spacing:1px;margin-top:2px;opacity:0.8;font-family:'Share Tech Mono',monospace}
+.np-loading{display:flex;align-items:center;justify-content:center;height:80px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px}
+.np-footer{border-top:1px double #1a1008;padding:3px 8px;display:flex;justify-content:space-between;font-size:7px;font-family:'Share Tech Mono',monospace;color:#777}
+.intel-inner{padding:8px;display:flex;flex-direction:column;gap:8px}
+.icard{background:var(--surface);border:1px solid var(--border);padding:9px}
+.icard h3{font-size:9px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;display:flex;align-items:center;gap:5px}
+.icard h3::after{content:'';flex:1;height:1px;background:var(--border)}
+.irow{display:flex;justify-content:space-between;align-items:center;font-size:10px;padding:3px 0;border-bottom:1px solid rgba(61,48,32,0.5)}.irow:last-child{border-bottom:none}
+.ival{color:var(--muted)}.ival.g{color:#5ab050}.ival.r{color:#e05050}.ival.a{color:var(--gold)}
+.actbtn{width:100%;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:10px;padding:6px 9px;text-align:left;cursor:pointer;font-family:inherit;transition:all 0.15s;margin-bottom:4px}
+.actbtn:hover{border-color:var(--gold);color:var(--text);background:var(--surface2)}
+.faction-divider{font-size:9px;color:var(--dim);letter-spacing:2px;padding:6px 9px 3px;text-transform:uppercase}
+.dayrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:4px}
+.daybtn{background:var(--surface2);border:1px solid var(--border2);color:var(--gold);font-family:inherit;font-size:11px;padding:4px 10px;cursor:pointer;transition:all 0.15s;font-weight:700}
+.daybtn:hover{background:var(--gold);color:#0a0800}.daybtn:disabled{opacity:0.3;cursor:not-allowed}
+.daylabel{font-size:11px;color:var(--gold);letter-spacing:1px;text-align:center;flex:1}
+.daydate{font-size:9px;color:var(--muted);text-align:center;margin-top:2px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center}
+.modal-overlay.hidden{display:none}
+.modal{background:#1c1710;border:1px solid var(--gold);padding:24px;max-width:420px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.6)}
+.modal h2{font-family:'Special Elite',serif;color:var(--gold);font-size:15px;margin-bottom:8px;letter-spacing:1px}
+.modal p{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:12px}
+.modal input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:11px;padding:8px 10px;outline:none;margin-bottom:8px}
+.modal input:focus{border-color:var(--gold)}
+.modal-btn{width:100%;background:var(--gold);color:#0a0800;border:none;padding:9px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:2px;margin-top:4px}
+.modal-btn:hover{background:var(--gold2)}
+.modal-note{font-size:9px;color:var(--dim);margin-top:8px;text-align:center}
+.fb-badge{position:fixed;bottom:10px;right:10px;background:rgba(28,23,16,0.95);border:1px solid var(--border2);color:var(--muted);font-size:9px;padding:4px 10px;z-index:100;display:flex;align-items:center;gap:5px;letter-spacing:1px}
+.fb-dot{width:6px;height:6px;border-radius:50%;background:var(--green2);animation:pulse 2s ease-in-out infinite}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:1px}
+@media(max-width:680px){.sidebar{width:140px}.intel{display:none}.drole{display:none}}
+@media(max-width:460px){.sidebar{display:none}}
+</style>
+</head>
+<body>
+
+<div class="modal-overlay" id="modalName">
+  <div class="modal">
+    <h2>⚔️ IDENTIFICAÇÃO DO OFICIAL</h2>
+    <p>Digite seu nome e o código da missão fornecido pelo professor. Suas ações serão monitoradas pelo Gabinete de Guerra.</p>
+    <input type="text" id="studentNameInput" placeholder="Nome completo do oficial..."/>
+    <input type="text" id="studentCodeInput" placeholder="Código da missão (ex: missao-1941-A)..."/>
+    <button class="modal-btn" onclick="saveStudentName()">⚡ ENTRAR NO GABINETE</button>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modalApi">
+  <div class="modal">
+    <h2>🔑 CHAVE DE ACESSO</h2>
+    <p>Insira sua chave de API da Anthropic para ativar o assistente estratégico.</p>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..."/>
+    <button class="modal-btn" onclick="saveApiKey()">AUTORIZAR ACESSO →</button>
+    <div class="modal-note">Obtenha em console.anthropic.com → API Keys</div>
+  </div>
+</div>
+
+<div class="fb-badge" id="fbBadge"><div class="fb-dot"></div><span>CONECTANDO...</span></div>
+
+<div class="hdr">
+  <div class="status-dot"></div>
+  <div class="hdr-left">
+    <div class="hdr-sub">Simulação Model UN — Gabinete de Guerra</div>
+    <div class="hdr-title">Operação Barbarossa</div>
+  </div>
+  <div class="badge">RESERVADO</div>
+  <div class="hdr-right">
+    <span style="font-size:9px;color:var(--muted)" id="hdrStudent">—</span>
+    <button class="hdr-btn" onclick="document.getElementById('modalApi').classList.remove('hidden')">🔑 API</button>
+    <div class="hdr-date" id="hdrDate">22 JUN 1941 · 03:15h</div>
+  </div>
+</div>
+
+<div class="app">
+  <div class="sidebar">
+    <div class="ptitle">Delegados</div>
+    <div class="dlist">
+      <div class="faction-divider">— Eixo —</div>
+      <button class="dbtn active" data-id="hitler" onclick="selDel(this)"><div class="dflag">🇩🇪</div><div class="dname">Adolf Hitler</div><div class="drole">Führer · OKW</div></button>
+      <button class="dbtn" data-id="brauchitsch" onclick="selDel(this)"><div class="dflag">🎖️</div><div class="dname">Von Brauchitsch</div><div class="drole">C-in-C Exército</div></button>
+      <button class="dbtn" data-id="halder" onclick="selDel(this)"><div class="dflag">📋</div><div class="dname">Franz Halder</div><div class="drole">Chefe Estado-Maior</div></button>
+      <button class="dbtn" data-id="bock" onclick="selDel(this)"><div class="dflag">⚔️</div><div class="dname">Fedor von Bock</div><div class="drole">Grupo Centro</div></button>
+      <button class="dbtn" data-id="rundstedt" onclick="selDel(this)"><div class="dflag">⚔️</div><div class="dname">Von Rundstedt</div><div class="drole">Grupo Sul</div></button>
+      <button class="dbtn" data-id="leeb" onclick="selDel(this)"><div class="dflag">⚔️</div><div class="dname">Wilhelm von Leeb</div><div class="drole">Grupo Norte</div></button>
+      <button class="dbtn" data-id="guderian" onclick="selDel(this)"><div class="dflag">🛡️</div><div class="dname">Heinz Guderian</div><div class="drole">2ª Gruppe Panzer</div></button>
+      <button class="dbtn" data-id="reichenau" onclick="selDel(this)"><div class="dflag">⚔️</div><div class="dname">Von Reichenau</div><div class="drole">6º Exército · Sul</div></button>
+      <div class="faction-divider">— URSS —</div>
+      <button class="dbtn soviet" data-id="timoshenko" onclick="selDel(this)"><div class="dflag">🇷🇺</div><div class="dname">Timoshenko</div><div class="drole">Narkom Defesa</div></button>
+      <button class="dbtn soviet" data-id="zhukov" onclick="selDel(this)"><div class="dflag">🇷🇺</div><div class="dname">Gueórgui Jukov</div><div class="drole">Chefe EM URSS</div></button>
+      <button class="dbtn soviet" data-id="stalin" onclick="selDel(this)"><div class="dflag">🇷🇺</div><div class="dname">Josef Stalin</div><div class="drole">Comandante Supremo</div></button>
+      <div class="faction-divider">— Propaganda —</div>
+      <button class="dbtn" data-id="goebbels" onclick="selDel(this)"><div class="dflag">📢</div><div class="dname">Goebbels</div><div class="drole">Min. Propaganda</div></button>
+    </div>
+  </div>
+
+  <div class="center">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('chat')">💬 Chat</button>
+      <button class="tab" onclick="switchTab('directive')">📜 Diretiva</button>
+      <button class="tab" onclick="switchTab('map')">🗺️ Mapa</button>
+      <button class="tab" onclick="switchTab('newspaper')">📰 Jornal</button>
+    </div>
+
+    <div class="tabpanel active" id="tab-chat">
+      <div class="chatlog" id="chatLog">
+        <div class="msg system"><div class="mtext">⚡ <strong>BARBAROSSA INICIADA — 03:15h.</strong> 3,8 milhões de soldados do Eixo cruzam a fronteira soviética. Selecione um delegado e inicie o debate estratégico.</div></div>
+        <div class="msg system"><div class="mtext">📌 Use <strong>📜 Diretiva</strong> para redigir ordens oficiais. Use <strong>🗺️ Mapa</strong> para acompanhar o avanço das tropas.</div></div>
+      </div>
+      <div class="typing" id="typing">Redigindo despacho...</div>
+      <div class="inputrow">
+        <select id="lang"><option value="pt">🇧🇷 PT</option><option value="en">🇺🇸 EN</option><option value="de">🇩🇪 DE</option></select>
+        <input class="msginput" type="text" id="inp" placeholder="Envie uma ordem ou pergunta estratégica..." onkeydown="if(event.key==='Enter')send()"/>
+        <button class="sendbtn" id="sbtn" onclick="send()">ENVIAR</button>
+      </div>
+    </div>
+
+    <div class="tabpanel" id="tab-directive">
+      <div class="dirform">
+        <div class="msg system" style="display:block"><div class="mtext">📜 Preencha o formulário. A IA irá <strong>(1)</strong> formatar a diretiva oficial, <strong>(2)</strong> analisar probabilidade histórica e <strong>(3)</strong> permitir escolher quem responde.</div></div>
+        <div class="dfield"><label>Tipo de Diretiva</label>
+          <select id="dirType">
+            <option value="solicitacao">1. Solicitação de Informação</option>
+            <option value="correspondencia">2. Correspondência Entre Personagens</option>
+            <option value="negociacao">3. Negociação / Acordo</option>
+            <option value="espionagem">4. Espionagem / Inteligência</option>
+            <option value="imprensa">6. Comunicado de Imprensa</option>
+            <option value="plano">7. Plano de Batalha</option>
+            <option value="reestruturacao">8. Reestruturação Militar</option>
+            <option value="impostos">9. Administração de Territórios Ocupados</option>
+          </select>
+        </div>
+        <div class="dfield"><label>Remetente</label>
+          <select id="dirFrom">
+            <option value="hitler">Adolf Hitler — Führer / OKW</option>
+            <option value="brauchitsch">Feldmareshal Von Brauchitsch — C-in-C Exército</option>
+            <option value="halder">General Franz Halder — Chefe do Estado-Maior</option>
+            <option value="bock">Feldmareshal Fedor von Bock — Grupo Centro</option>
+            <option value="rundstedt">Feldmareshal Von Rundstedt — Grupo Sul</option>
+            <option value="leeb">Feldmareshal Wilhelm von Leeb — Grupo Norte</option>
+            <option value="guderian">General Heinz Guderian — 2ª Gruppe Panzer</option>
+            <option value="reichenau">Feldmareshal Von Reichenau — 6º Exército</option>
+            <option value="timoshenko">Marechal Timoshenko — Narkom da Defesa URSS</option>
+            <option value="zhukov">General Jukov — Chefe do EM Soviético</option>
+            <option value="stalin">Josef Stalin — Comandante Supremo URSS</option>
+            <option value="goebbels">Joseph Goebbels — Min. Propaganda do Reich</option>
+          </select>
+        </div>
+        <div class="dfield"><label>Destinatário</label><input type="text" id="dirTo" placeholder="Ex: General Guderian, General Kleist..."/></div>
+        <div class="dfield"><label>Assunto / Objetivo</label><input type="text" id="dirSubject" placeholder="Ex: Situação em Smolensk, Avanço sobre Kiev..."/></div>
+        <div class="dfield"><label>Conteúdo Principal</label><textarea id="dirContent" placeholder="Descreva em linguagem simples o que a diretiva deve ordenar, solicitar ou comunicar."></textarea></div>
+        <div class="dfield"><label>Nível de Sigilo</label>
+          <select id="dirClassif"><option value="RESERVADO">RESERVADO</option><option value="SECRETO">SECRETO</option><option value="ULTRASSECRETO">ULTRASSECRETO</option><option value="PÚBLICO">PÚBLICO</option></select>
+        </div>
+        <button class="dirbtn" id="dirBtn" onclick="generateDirective()">⚡ GERAR DIRETIVA + ANÁLISE</button>
+        <button class="dirbtn secondary" onclick="clearForm()">✕ Limpar</button>
+      </div>
+    </div>
+
+    <div class="tabpanel" id="tab-map">
+      <div class="maptab">
+        <div class="map-canvas-wrap">
+          <div id="mapLeaflet" style="width:100%;height:100%;background:#0d1a0d"></div>
+        </div>
+        <div class="map-controls">
+          <button class="map-btn" id="btnPlay" onclick="toggleAnim()">▶ ANIMAR</button>
+          <button class="map-btn" onclick="resetAnim()">⟳ REINICIAR</button>
+          <span style="font-size:10px;color:var(--muted)" id="animLabel">Dia 1 — 22 Jun 1941</span>
+          <div class="map-legend">
+            <div class="leg-item"><div class="leg-dot" style="background:#4a7adc"></div><span>Wehrmacht</span></div>
+            <div class="leg-item"><div class="leg-dot" style="background:#c84a4a"></div><span>Exército Vermelho</span></div>
+            <div class="leg-item"><div class="leg-dot" style="background:#c8a84a"></div><span>Cidade</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabpanel" id="tab-newspaper">
+      <div class="newspaper-wrap">
+        <div class="np-controls">
+          <div class="np-side-btns">
+            <button class="np-btn active" id="btnAxisPaper" onclick="selectPaper('axis')">🇩🇪 Völkischer Beobachter</button>
+            <button class="np-btn" id="btnSovietPaper" onclick="selectPaper('soviet')">🇷🇺 Pravda</button>
+          </div>
+          <button class="np-generate-btn" id="npGenBtn" onclick="generateNewspaper()">⚡ GERAR EDIÇÃO — DIA <span id="npDayLabel">1</span></button>
+        </div>
+        <div class="newspaper-scroll" id="newspaperScroll">
+          <div class="np-placeholder">
+            <div style="font-size:32px;margin-bottom:12px">📰</div>
+            <div style="font-size:12px;color:var(--muted);letter-spacing:2px">SELECIONE O JORNAL E CLIQUE EM GERAR</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="intel">
+    <div class="ptitle">Intel</div>
+    <div class="intel-inner">
+      <div class="icard">
+        <h3>Calendário</h3>
+        <div class="dayrow">
+          <button class="daybtn" id="btnPrev" onclick="changeDay(-1)" disabled>◀</button>
+          <div><div class="daylabel" id="dayLabel">Dia 1</div><div class="daydate" id="dayDate">22 Jun 1941</div></div>
+          <button class="daybtn" id="btnNext" onclick="changeDay(1)">▶</button>
+        </div>
+      </div>
+      <div class="icard"><h3>Situação</h3><div id="situationRows"></div></div>
+      <div class="icard"><h3>Avanço</h3><div id="forcesRows"></div></div>
+      <div class="icard"><h3>Oficial</h3>
+        <div class="irow"><span>Nome</span><span class="ival a" id="sideStudent">—</span></div>
+        <div class="irow"><span>Missão</span><span class="ival" id="sideMission">—</span></div>
+      </div>
+      <div class="icard"><h3>Ações Rápidas</h3><div id="quickActions"></div></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, doc, setDoc, serverTimestamp, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+const fb = initializeApp({
+  apiKey:"AIzaSyCOMmKs-WXGbx-CseFBaD7ISB6HZjBoamk",
+  authDomain:"barbarossa-mun.firebaseapp.com",
+  projectId:"barbarossa-mun",
+  storageBucket:"barbarossa-mun.firebasestorage.app",
+  messagingSenderId:"202509883011",
+  appId:"1:202509883011:web:ca0183d935366231b3adb6"
+});
+const db = getFirestore(fb);
+window._db = db;
+window._fbFns = { doc, setDoc, serverTimestamp, collection, addDoc };
+window._fbReady = true;
+document.getElementById('fbBadge').innerHTML = '<div class="fb-dot"></div><span>MONITORADO PELO PROFESSOR</span>';
+</script>
+
+<script>
+let API_KEY = localStorage.getItem('barb_api_key') || '';
+let studentName = '', studentCode = 'missao-geral';
+let curDay = 0, cur = 'hitler', hist = [];
+let lastDirectiveText = '', lastAnalysisText = '', lastReplyText = '';
+let lastNewspaper = null, currentPaper = 'axis';
+
+function saveStudentName() {
+  const n = document.getElementById('studentNameInput').value.trim();
+  const c = document.getElementById('studentCodeInput').value.trim();
+  if (!n) { alert('Digite seu nome.'); return; }
+  studentName = n; studentCode = c || 'missao-geral';
+  localStorage.setItem('barb_student_name', n);
+  localStorage.setItem('barb_student_code', studentCode);
+  document.getElementById('modalName').classList.add('hidden');
+  document.getElementById('hdrStudent').textContent = n;
+  document.getElementById('sideStudent').textContent = n;
+  document.getElementById('sideMission').textContent = studentCode;
+  if (!API_KEY) document.getElementById('modalApi').classList.remove('hidden');
+  fbLog('entrou', { nome: n });
+}
+
+function saveApiKey() {
+  const k = document.getElementById('apiKeyInput').value.trim();
+  if (!k.startsWith('sk-ant-')) { alert('Chave inválida.'); return; }
+  API_KEY = k; localStorage.setItem('barb_api_key', k);
+  document.getElementById('modalApi').classList.add('hidden');
+}
+
+function checkInit() {
+  const n = localStorage.getItem('barb_student_name');
+  if (n) {
+    studentName = n; studentCode = localStorage.getItem('barb_student_code') || 'missao-geral';
+    document.getElementById('modalName').classList.add('hidden');
+    document.getElementById('hdrStudent').textContent = n;
+    document.getElementById('sideStudent').textContent = n;
+    document.getElementById('sideMission').textContent = studentCode;
+    if (!API_KEY) document.getElementById('modalApi').classList.remove('hidden');
+  }
+}
+
+async function fbLog(tipo, dados) {
+  if (!window._fbReady || !studentName) return;
+  try {
+    const { doc, setDoc, serverTimestamp, collection, addDoc } = window._fbFns;
+    const db = window._db;
+    await addDoc(collection(db, 'missoes', studentCode, 'atividades'), {
+      tipo, oficial: studentName, missao: studentCode, delegado: cur,
+      timestamp: serverTimestamp(), ...dados
+    });
+    await setDoc(doc(db, 'missoes', studentCode, 'oficiais', studentName.replace(/\s+/g, '_')), {
+      nome: studentName, delegado_atual: cur, ultima_atividade: tipo,
+      timestamp: serverTimestamp()
+    }, { merge: true });
+  } catch(e) { console.warn('FB:', e.message); }
+}
+
+async function callClaude(system, messages, max_tokens) {
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'anthropic-version': '2023-06-01', 'x-api-key': API_KEY, 'anthropic-dangerous-direct-browser-access': 'true' },
+    body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: max_tokens || 900, system, messages })
+  });
+  if (!r.ok) { const e = await r.text(); throw new Error('API ' + r.status + ': ' + e.substring(0, 80)); }
+  const d = await r.json();
+  return d.content?.map(c => c.text || '').join('') || '';
+}
+
+const DAYS=[
+  {day:1,date:'22 Jun 1941',time:'03:15h',situation:[{l:'Wehrmacht',v:'Avançando',c:'g'},{l:'Luftwaffe',v:'Superioridade',c:'g'},{l:'URSS Defesa',v:'Desorientada',c:'r'},{l:'Comunic. SV',v:'Cortadas',c:'r'},{l:'Suprimento',v:'Monit.',c:'a'}],forces:[{l:'Avanço Centro',v:'0–30 km'},{l:'Avanço Norte',v:'0–20 km'},{l:'Avanço Sul',v:'0–15 km'},{l:'Aviões SV destr.',v:'~800'}],quick:[{i:'🎯',t:'Qual é o objetivo prioritário: Moscou, Leningrado ou Kiev?'},{i:'🛡️',t:'Qual a velocidade de avanço esperada dos Grupos Panzer?'},{i:'🇷🇺',t:'Como reorganizar a defesa soviética após o ataque surpresa?'},{i:'📦',t:'Quais são os maiores riscos logísticos da operação?'},{i:'⚔️',t:'Devemos avançar sobre Moscou ou consolidar flancos primeiro?'}]},
+  {day:3,date:'24 Jun 1941',time:'06:00h',situation:[{l:'Wehrmacht',v:'Avanço Rápido',c:'g'},{l:'Luftwaffe',v:'Dominante',c:'g'},{l:'URSS Defesa',v:'Colapsando',c:'r'},{l:'Cerco Bialystok',v:'Em curso',c:'a'},{l:'Suprimento',v:'Tenso',c:'a'}],forces:[{l:'Avanço Centro',v:'~150 km'},{l:'Avanço Norte',v:'~100 km'},{l:'Avanço Sul',v:'~80 km'},{l:'Aviões SV destr.',v:'~2.000'}],quick:[{i:'🎯',t:'O cerco de Bialystok está se fechando — próximos passos?'},{i:'🛡️',t:'Os Panzers devem parar para esperar a infantaria ou continuar?'},{i:'🇷🇺',t:'Como Stalin está reagindo ao colapso das defesas?'},{i:'📦',t:'As linhas de suprimento acompanham o avanço?'},{i:'⚔️',t:'Minsk pode ser cercada antes que os soviéticos recuem?'}]},
+  {day:7,date:'28 Jun 1941',time:'12:00h',situation:[{l:'Wehrmacht',v:'Cercos Ativos',c:'g'},{l:'Luftwaffe',v:'Superioridade',c:'g'},{l:'Cerco Minsk',v:'Fechado',c:'a'},{l:'URSS Reservas',v:'Mobilizando',c:'a'},{l:'Suprimento',v:'Crítico',c:'r'}],forces:[{l:'Avanço Centro',v:'~320 km'},{l:'Avanço Norte',v:'~250 km'},{l:'Avanço Sul',v:'~150 km'},{l:'Prisioneiros SV',v:'~300.000'}],quick:[{i:'🎯',t:'Minsk cercada — devemos avançar para Smolensk?'},{i:'🛡️',t:'Como lidar com os prisioneiros soviéticos capturados?'},{i:'🇷🇺',t:'Stalin declarou guerra total — como isso muda a situação?'},{i:'📦',t:'O suprimento está crítico — como resolver?'},{i:'⚔️',t:'Os soviéticos contraatacam — qual a melhor resposta?'}]},
+  {day:14,date:'5 Jul 1941',time:'08:00h',situation:[{l:'Wehrmacht',v:'Avançando',c:'g'},{l:'Luftwaffe',v:'Ativa',c:'g'},{l:'URSS Defesa',v:'Reorganizando',c:'a'},{l:'Resistência SV',v:'Aumentando',c:'a'},{l:'Suprimento',v:'Grave',c:'r'}],forces:[{l:'Avanço Centro',v:'~500 km'},{l:'Avanço Norte',v:'~400 km'},{l:'Avanço Sul',v:'~250 km'},{l:'Prisioneiros SV',v:'~600.000'}],quick:[{i:'🎯',t:'Smolensk à vista — como garantir sua captura?'},{i:'🛡️',t:'Os Panzers estão desgastados — pausar para manutenção?'},{i:'🇷🇺',t:'As novas divisões soviéticas chegam — como neutralizá-las?'},{i:'📦',t:'A logística está falhando — soluções imediatas?'},{i:'⚔️',t:'Desviar forças para ajudar o Grupo Sul em Kiev?'}]},
+  {day:30,date:'22 Jul 1941',time:'10:00h',situation:[{l:'Wehrmacht',v:'Desacelerando',c:'a'},{l:'Luftwaffe',v:'Ativa',c:'g'},{l:'Smolensk',v:'Cercada',c:'a'},{l:'Resistência SV',v:'Feroz',c:'r'},{l:'Suprimento',v:'Crítico',c:'r'}],forces:[{l:'Avanço Centro',v:'~700 km'},{l:'Avanço Norte',v:'~550 km'},{l:'Avanço Sul',v:'~350 km'},{l:'Baixas Eixo',v:'~100.000'}],quick:[{i:'🎯',t:'A resistência soviética aumentou — o que mudou?'},{i:'🛡️',t:'Priorizar Moscou ou consolidar Smolensk?'},{i:'🇷🇺',t:'A URSS recebe ajuda externa — qual o impacto?'},{i:'📦',t:'Perdas de tanques alarmantes — como reequipar?'},{i:'⚔️',t:'Hitler quer desviar Panzers para o sul — concorda?'}]},
+  {day:82,date:'12 Set 1941',time:'07:00h',situation:[{l:'Wehrmacht',v:'Envolvendo Kiev',c:'g'},{l:'Leningrado',v:'Bloqueada',c:'a'},{l:'Grupo Centro',v:'Reagrupando',c:'a'},{l:'URSS',v:'Perdas Enormes',c:'r'},{l:'Suprimento',v:'Grave',c:'r'}],forces:[{l:'Cerco de Kiev',v:'Fechando'},{l:'Prisioneiros SV',v:'~1.500.000'},{l:'Leningrado',v:'Isolada'},{l:'Baixas Eixo',v:'~350.000'}],quick:[{i:'🎯',t:'Cerco de Kiev quase completo — impacto estratégico?'},{i:'🛡️',t:'Guderian desviado ao sul — concorda com a decisão?'},{i:'🇷🇺',t:'Jukov removido do comando — o que isso significa?'},{i:'📦',t:'Linhas de suprimento colapsando — como resolver?'},{i:'⚔️',t:'Com Kiev tomada, ainda é possível atacar Moscou em 1941?'}]},
+  {day:100,date:'30 Set 1941',time:'05:30h',situation:[{l:'Op. Tufão',v:'Iniciada',c:'g'},{l:'Kiev',v:'Capturada',c:'g'},{l:'Grupo Centro',v:'Avançando',c:'g'},{l:'URSS Defesa',v:'Desesperada',c:'r'},{l:'Inverno',v:'Aproximando',c:'a'}],forces:[{l:'Avanço sobre Moscou',v:'Retomado'},{l:'Panzers disponíveis',v:'~50% original'},{l:'Prisioneiros SV',v:'~2.500.000'},{l:'Baixas Eixo',v:'~500.000'}],quick:[{i:'🎯',t:'Op. Tufão lançada — é tarde demais para vencer?'},{i:'🛡️',t:'Panzers desgastados — conseguirão chegar a Moscou?'},{i:'🇷🇺',t:'Moscou será evacuada ou defendida até o fim?'},{i:'📦',t:'Inverno se aproxima — tropas estão equipadas?'},{i:'⚔️',t:'Vyazma e Bryansk cercadas — próximo objetivo?'}]},
+  {day:145,date:'15 Nov 1941',time:'06:00h',situation:[{l:'Solo Congelado',v:'Avanço retomado',c:'a'},{l:'Temperatura',v:'-15°C',c:'r'},{l:'Moscou',v:'~50 km',c:'a'},{l:'Reforços SV',v:'Chegando',c:'r'},{l:'Suprimento',v:'Colapsado',c:'r'}],forces:[{l:'Distância de Moscou',v:'~50 km'},{l:'Tanques operacionais',v:'~20%'},{l:'Infantaria',v:'Exausta'},{l:'Baixas Eixo',v:'~800.000'}],quick:[{i:'🎯',t:'Moscou a 50 km — último esforço pode tomá-la?'},{i:'🛡️',t:'Tropas sem equipamento de inverno — como combater?'},{i:'🇷🇺',t:'Jukov assumiu defesa de Moscou — qual sua estratégia?'},{i:'📦',t:'Suprimentos colapsados — o que fazer?'},{i:'⚔️',t:'Suspender o ataque e consolidar posições para o inverno?'}]},
+  {day:175,date:'15 Dez 1941',time:'03:00h',situation:[{l:'Cont. Soviético',v:'Em curso',c:'r'},{l:'Wehrmacht',v:'Recuando',c:'r'},{l:'Hitler',v:'Proibiu recuos',c:'r'},{l:'Leningrado',v:'Sitiada',c:'a'},{l:'Japão x EUA',v:'Guerra declarada',c:'a'}],forces:[{l:'Recuo Grupo Centro',v:'Em andamento'},{l:'Baixas totais Eixo',v:'~1.000.000'},{l:'Divisões SV ativas',v:'280+'},{l:'Frente estabilizada',v:'Não'}],quick:[{i:'🎯',t:'Contraataque soviético — a Barbarossa fracassou?'},{i:'🛡️',t:'Hitler assumiu comando direto — consequências?'},{i:'🇷🇺',t:'Divisões siberianas foram decisivas — por quê?'},{i:'📦',t:'Logística alemã colapsou — lições aprendidas?'},{i:'⚔️',t:'EUA entraram na guerra — como muda o quadro?'}]},
+  {day:192,date:'31 Dez 1941',time:'23:59h',situation:[{l:'Barbarossa',v:'Fracassada',c:'r'},{l:'Wehrmacht',v:'Na defensiva',c:'r'},{l:'URSS',v:'Contra-ofensiva',c:'g'},{l:'Leningrado',v:'Sitiada',c:'r'},{l:'Guerra Mundial',v:'Ampliada',c:'r'}],forces:[{l:'Território SV ocupado',v:'~1.500.000 km²'},{l:'Baixas totais Eixo',v:'~1.100.000'},{l:'Baixas totais URSS',v:'~4.000.000'},{l:'Moscou',v:'Não conquistada'}],quick:[{i:'🎯',t:'Balanço final — Alemanha pode ainda vencer a guerra?'},{i:'🛡️',t:'Maiores erros estratégicos da Barbarossa?'},{i:'🇷🇺',t:'Por que a URSS sobreviveu contra todas as expectativas?'},{i:'📦',t:'Logística foi o calcanhar de Aquiles — análise final?'},{i:'⚔️',t:'O que 1942 reserva para a Frente Oriental?'}]}
+];
+
+const DIR_TYPES={solicitacao:'Solicitação de Informação',correspondencia:'Correspondência Entre Personagens',negociacao:'Negociação / Acordo',espionagem:'Espionagem / Inteligência Militar',imprensa:'Comunicado de Imprensa',plano:'Plano de Batalha',reestruturacao:'Reestruturação Militar',impostos:'Administração de Territórios Ocupados'};
+
+const D={
+  hitler:{name:'Adolf Hitler',soviet:false,persona:'Você é Adolf Hitler durante a Operação Barbarossa. Confiante, dogmático, dramático e autoritário. Simulação educacional.'},
+  brauchitsch:{name:'Walther von Brauchitsch',soviet:false,persona:'Você é o Feldmareshal von Brauchitsch. General prussiano profissional e técnico. Simulação educacional.'},
+  halder:{name:'Franz Halder',soviet:false,persona:'Você é o General Franz Halder, Chefe do Estado-Maior. Analítico e meticuloso. Simulação educacional.'},
+  bock:{name:'Fedor von Bock',soviet:false,persona:'Você é o Feldmareshal von Bock, Grupo de Exércitos Centro. Simulação educacional.'},
+  rundstedt:{name:'Gerd von Rundstedt',soviet:false,persona:'Você é o Feldmareshal von Rundstedt, Grupo de Exércitos Sul. Simulação educacional.'},
+  leeb:{name:'Wilhelm von Leeb',soviet:false,persona:'Você é o Feldmareshal von Leeb, Grupo de Exércitos Norte. Simulação educacional.'},
+  guderian:{name:'Heinz Guderian',soviet:false,persona:'Você é o General Guderian, 2ª Gruppe Panzer. Apaixonado pela Blitzkrieg. Simulação educacional.'},
+  reichenau:{name:'Walter von Reichenau',soviet:false,persona:'Você é o Feldmareshal von Reichenau, 6º Exército. Simulação educacional.'},
+  timoshenko:{name:'Semyon Timoshenko',soviet:true,persona:'Você é o Marechal Timoshenko, Narkom da Defesa da URSS. Simulação educacional.'},
+  zhukov:{name:'Gueórgui Jukov',soviet:true,persona:'Você é o General Jukov, Chefe do Estado-Maior soviético. Pragmático e determinado. Simulação educacional.'},
+  stalin:{name:'Josef Stalin',soviet:true,persona:'Você é Josef Stalin, Comandante Supremo da URSS. Autoritário e determinado. Simulação educacional.'},
+  goebbels:{name:'Joseph Goebbels',soviet:false,persona:'Você é Joseph Goebbels, Ministro da Propaganda do Reich. Eloquente e apaixonado. Simulação educacional.'}
+};
+
+let mapLeaflet=null,animFrame=null,animStep=0,animPlaying=false,frontLayers=[],cityMarkers=[];
+const TOTAL_STEPS=80;
+const GEO_FRONTS=[
+  {norte:[[56.0,22.0],[55.0,24.5],[54.0,25.5]],centro:[[54.0,25.5],[52.5,27.0],[51.5,27.5]],sul:[[51.5,27.5],[50.0,28.5],[48.5,30.0],[47.0,31.5]]},
+  {norte:[[56.5,22.5],[55.5,25.0],[54.5,26.5]],centro:[[54.5,26.5],[53.0,28.0],[52.0,28.5]],sul:[[52.0,28.5],[50.5,29.5],[49.0,31.0],[47.5,32.0]]},
+  {norte:[[57.0,23.5],[56.0,26.0],[55.0,27.5]],centro:[[55.0,27.5],[54.0,29.0],[53.0,30.0]],sul:[[53.0,30.0],[51.5,31.5],[50.0,32.5],[48.0,33.0]]},
+  {norte:[[57.5,24.5],[56.5,27.0],[55.5,28.5]],centro:[[55.5,28.5],[54.5,30.5],[53.5,32.0]],sul:[[53.5,32.0],[52.0,33.0],[50.5,34.0],[48.5,34.5]]},
+  {norte:[[58.0,25.5],[57.0,28.0],[56.0,29.5]],centro:[[56.0,29.5],[55.0,31.5],[54.0,33.0]],sul:[[54.0,33.0],[52.5,34.0],[51.0,35.5],[49.0,36.0]]},
+  {norte:[[59.5,27.0],[58.5,29.5],[57.5,30.5]],centro:[[57.5,30.5],[56.0,32.0],[55.0,33.5]],sul:[[55.0,33.5],[53.5,34.5],[52.0,36.0],[50.0,37.0]]},
+  {norte:[[60.0,28.0],[59.0,30.5],[58.0,31.5]],centro:[[58.0,31.5],[56.5,33.0],[55.5,34.5]],sul:[[55.5,34.5],[54.0,35.5],[52.0,37.0],[50.5,38.0]]},
+  {norte:[[60.5,28.5],[59.5,31.0],[58.5,32.5]],centro:[[58.5,32.5],[57.0,34.0],[56.0,35.5]],sul:[[56.0,35.5],[54.5,36.5],[53.0,37.5],[51.0,38.5]]},
+  {norte:[[60.5,29.5],[59.5,32.0],[58.5,33.5]],centro:[[58.5,33.5],[57.5,35.5],[56.5,37.0]],sul:[[56.5,37.0],[55.0,38.0],[53.5,39.0],[52.0,40.0]]},
+  {norte:[[60.5,29.0],[59.5,31.5],[58.5,33.0]],centro:[[58.5,33.0],[57.0,35.0],[56.0,36.5]],sul:[[56.0,36.5],[54.5,37.5],[53.0,38.5],[51.5,39.5]]},
+  {norte:[[60.0,28.5],[59.0,31.0],[58.0,32.5]],centro:[[58.0,32.5],[56.5,34.0],[55.5,35.5]],sul:[[55.5,35.5],[54.0,36.5],[52.5,37.5],[51.0,38.5]]}
+];
+const GEO_SOVIET=[
+  [[57.5,28.0],[56.0,30.0],[55.0,31.0],[53.5,32.0],[52.0,33.0],[50.0,34.5]],
+  [[58.0,29.0],[57.0,31.0],[55.5,32.5],[54.0,33.5],[52.5,34.5],[50.5,35.5]],
+  [[58.5,30.5],[57.5,32.5],[56.0,34.0],[54.5,35.0],[53.0,36.0],[51.0,37.0]],
+  [[59.0,31.5],[58.0,33.5],[56.5,35.0],[55.0,36.0],[53.5,37.0],[51.5,38.0]],
+  [[59.5,32.5],[58.5,34.5],[57.0,36.0],[55.5,37.0],[54.0,38.0],[52.0,39.0]],
+  [[60.0,33.5],[59.0,35.5],[57.5,37.0],[56.0,38.0],[54.5,39.0],[52.5,40.0]],
+  [[60.5,34.5],[59.5,36.5],[58.0,38.0],[56.5,39.0],[55.0,40.0],[53.0,41.0]],
+  [[60.5,35.0],[59.5,37.0],[58.0,38.5],[56.5,39.5],[55.0,40.5],[53.5,41.5]],
+  [[60.5,36.0],[59.5,38.0],[58.5,39.5],[57.0,40.5],[55.5,41.5],[54.0,42.5]],
+  [[60.5,35.5],[59.5,37.5],[58.0,39.0],[56.5,40.0],[55.0,41.0],[53.5,42.0]],
+  [[60.5,34.5],[59.0,36.5],[57.5,38.0],[56.0,39.0],[54.5,40.0],[53.0,41.0]]
+];
+const GEO_CITIES=[
+  {name:'Berlim',lat:52.5,lng:13.4,major:true,axis:true,conqueredDay:-1},{name:'Varsóvia',lat:52.2,lng:21.0,major:true,axis:true,conqueredDay:-1},
+  {name:'Riga',lat:56.9,lng:24.1,major:true,axis:false,conqueredDay:1},{name:'Minsk',lat:53.9,lng:27.6,major:true,axis:false,conqueredDay:2},
+  {name:'Smolensk',lat:54.8,lng:32.0,major:true,axis:false,conqueredDay:4},{name:'Moscou',lat:55.75,lng:37.6,major:true,axis:false,conqueredDay:-1},
+  {name:'Leningrado',lat:59.95,lng:30.3,major:true,axis:false,conqueredDay:-1},{name:'Kiev',lat:50.45,lng:30.5,major:true,axis:false,conqueredDay:6},
+  {name:'Brest',lat:52.1,lng:23.7,major:false,axis:false,conqueredDay:0},{name:'Bialystok',lat:53.1,lng:23.2,major:false,axis:false,conqueredDay:0},
+  {name:'Vyazma',lat:55.2,lng:34.3,major:false,axis:false,conqueredDay:7},{name:'Kharkiv',lat:50.0,lng:36.25,major:false,axis:false,conqueredDay:8}
+];
+
+function initMap(){if(mapLeaflet){mapLeaflet.invalidateSize();return;}mapLeaflet=L.map('mapLeaflet',{zoomControl:true,attributionControl:false}).setView([54,30],5);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:8,minZoom:4,opacity:0.6}).addTo(mapLeaflet);L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png',{maxZoom:8,minZoom:4,opacity:0.55}).addTo(mapLeaflet);drawGeoMap(0,1);setTimeout(()=>mapLeaflet.invalidateSize(),100);}
+function clearMapLayers(){frontLayers.forEach(l=>mapLeaflet.removeLayer(l));cityMarkers.forEach(l=>mapLeaflet.removeLayer(l));frontLayers=[];cityMarkers=[];}
+function lerpLL(a,b,t){return[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];}
+function lerpLine(a,b,t){const n=Math.min(a.length,b.length);return Array.from({length:n},(_,i)=>lerpLL(a[i],b[i],t));}
+function drawGeoMap(di,prog){if(!mapLeaflet)return;clearMapLayers();const si=Math.min(di,GEO_FRONTS.length-1),ni=Math.min(si+1,GEO_FRONTS.length-1),t=Math.min(prog,1);const fA=GEO_FRONTS[si],fB=GEO_FRONTS[ni];const ax={color:'#4a7adc',weight:3,opacity:0.9};[lerpLine(fA.norte,fB.norte,t),lerpLine(fA.centro,fB.centro,t),lerpLine(fA.sul,fB.sul,t)].forEach(line=>{frontLayers.push(L.polyline(line,ax).addTo(mapLeaflet));frontLayers.push(L.circleMarker(line[line.length-1],{radius:5,color:'#4a7adc',fillColor:'#4a7adc',fillOpacity:1,weight:0}).addTo(mapLeaflet));});const svA=GEO_SOVIET[Math.min(si,GEO_SOVIET.length-1)],svB=GEO_SOVIET[Math.min(ni,GEO_SOVIET.length-1)];frontLayers.push(L.polyline(lerpLine(svA,svB,t),{color:'#c84a4a',weight:2,opacity:0.85,dashArray:'8,5'}).addTo(mapLeaflet));GEO_CITIES.forEach(c=>{const conquered=c.conqueredDay>=0&&c.conqueredDay<=si;const color=c.axis?'#c8a84a':conquered?'#4a7adc':'#c84a4a';const m=L.circleMarker([c.lat,c.lng],{radius:c.major?7:4,color,fillColor:color,fillOpacity:conquered||c.axis?0.9:0.4,weight:2}).bindTooltip('<div style="font-family:Share Tech Mono;font-size:11px;background:#111009;border:1px solid #c8a84a;color:#ede0c4;padding:4px 8px">'+c.name+(conquered?' ✓ TOMADA':'')+'</div>',{sticky:true}).addTo(mapLeaflet);if(c.major){const icon=L.divIcon({className:'',html:'<div style="font-family:Share Tech Mono;font-size:9px;color:'+color+';white-space:nowrap;text-shadow:0 0 3px #000;margin-top:-2px;margin-left:9px">'+c.name+'</div>',iconAnchor:[0,0]});cityMarkers.push(L.marker([c.lat,c.lng],{icon,interactive:false}).addTo(mapLeaflet));}cityMarkers.push(m);});document.getElementById('animLabel').textContent='Dia '+DAYS[Math.min(di,DAYS.length-1)].day+' — '+DAYS[Math.min(di,DAYS.length-1)].date;}
+function toggleAnim(){if(animPlaying){animPlaying=false;cancelAnimationFrame(animFrame);document.getElementById('btnPlay').textContent='▶ ANIMAR';}else{animPlaying=true;document.getElementById('btnPlay').textContent='⏸ PAUSAR';runAnim();}}
+function resetAnim(){animPlaying=false;cancelAnimationFrame(animFrame);animStep=0;document.getElementById('btnPlay').textContent='▶ ANIMAR';drawGeoMap(0,1);}
+function runAnim(){if(!animPlaying)return;const total=TOTAL_STEPS*(DAYS.length-1);animStep=Math.min(animStep+1,total);drawGeoMap(Math.min(Math.floor(animStep/TOTAL_STEPS),GEO_FRONTS.length-1),(animStep%TOTAL_STEPS)/TOTAL_STEPS);if(animStep>=total){animPlaying=false;document.getElementById('btnPlay').textContent='▶ ANIMAR';return;}animFrame=requestAnimationFrame(runAnim);}
+
+function selectPaper(side){currentPaper=side;document.getElementById('btnAxisPaper').classList.toggle('active',side==='axis');document.getElementById('btnSovietPaper').classList.toggle('active',side==='soviet');}
+function updateNpDayLabel(){document.getElementById('npDayLabel').textContent=DAYS[curDay].day;}
+
+async function generateNewspaper(){
+  const btn=document.getElementById('npGenBtn');btn.disabled=true;
+  const scroll=document.getElementById('newspaperScroll');
+  const d=DAYS[curDay];const isAxis=currentPaper==='axis';
+  const paperName=isAxis?'Völkischer Beobachter':'Pravda';
+  const paperSide=isAxis?'alemão nazista':'soviético comunista';
+  scroll.innerHTML='<div class="np-loading">⏳ REDIGINDO EDIÇÃO — '+d.date.toUpperCase()+'...</div>';
+  const sys='Você é o editor-chefe do jornal '+paperName+' em '+d.date+'. Redija em português brasileiro com tom de propaganda '+paperSide+' de 1941. Retorne SOMENTE JSON válido sem markdown: {"manchete_principal":"MANCHETE","subtitulo":"subtítulo","artigo_principal":"par1\\n\\npar2","manchete_2":"2ª MANCHETE","noticia_2":"parágrafo","manchete_3":"3ª MANCHETE","noticia_3":"parágrafo","propaganda":"SLOGAN","propaganda_sub":"subtítulo","editorial":"parágrafo"}';
+  let np={};
+  try{const raw=await callClaude(sys,[{role:'user',content:'Edição '+d.date+' — Dia '+d.day+'. Situação: '+d.situation.slice(0,3).map(s=>s.l+': '+s.v).join(', ')+'. Distorça conforme propaganda '+paperSide+'.'}],900);np=JSON.parse(raw.replace(/```json|```/g,'').trim());}
+  catch(e){scroll.innerHTML='<div class="np-loading">Erro: '+e.message+'</div>';btn.disabled=false;return;}
+  fbLog('jornal',{veiculo:paperName,manchete:np.manchete_principal,dia:d.day});
+  lastNewspaper={paper:paperName,day:d,isAxis,np};
+  scroll.innerHTML='';
+  const w=document.createElement('div');
+  w.innerHTML='<div class="np-edition"><div class="np-header"><div class="np-header-top"><span>Nº '+(1000+curDay*7)+'</span><span>'+d.date.toUpperCase()+'</span><span>10 PFENNIG</span></div><div class="np-masthead'+(isAxis?'':' soviet')+'">'+paperName.toUpperCase()+'</div><div class="np-subhead">'+(isAxis?'ÓRGÃO OFICIAL DO PARTIDO NACIONAL-SOCIALISTA':'ÓRGÃO OFICIAL DO PARTIDO COMUNISTA DA URSS')+'</div><div class="np-dateline"><span>'+d.date.toUpperCase()+' · DIA '+d.day+'</span><span>'+(isAxis?'GRANDE REICH ALEMÃO':'U.R.S.S.')+'</span></div></div><div class="np-body"><div class="np-main-story"><div class="np-headline'+(isAxis?'':' soviet')+'">'+(np.manchete_principal||'')+'</div><div class="np-byline">Por nosso correspondente de guerra · '+d.date+'</div><div class="np-article">'+(np.artigo_principal||'').replace(/\n\n/g,'</p><p>')+'</div><div style="font-size:10px;font-style:italic;color:#555;margin-top:8px;font-family:Share Tech Mono,monospace">'+(np.subtitulo||'')+'</div></div><div class="np-side-story"><div class="np-side-headline'+(isAxis?'':' soviet')+'">'+(np.manchete_2||'')+'</div><div class="np-side-text">'+(np.noticia_2||'')+'</div></div><div class="np-side-story"><div class="np-side-headline'+(isAxis?'':' soviet')+'">'+(np.manchete_3||'')+'</div><div class="np-side-text">'+(np.noticia_3||'')+'</div><div style="margin-top:12px;padding-top:10px;border-top:1px solid #ccc"><div style="font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;color:#444">EDITORIAL</div><div class="np-side-text" style="font-style:italic">'+(np.editorial||'')+'</div></div></div><div class="np-propaganda'+(isAxis?'':' soviet')+'"><div class="np-propaganda-text">'+(np.propaganda||'')+'</div><div class="np-propaganda-sub">'+(np.propaganda_sub||'')+'</div></div></div><div class="np-footer"><span>'+paperName+' · 1920</span><span>Simulação educacional — Barbarossa</span><span>'+d.date+'</span></div></div>';
+  scroll.appendChild(w);
+  const pdfDiv=document.createElement('div');pdfDiv.style.cssText='text-align:center;padding:10px 0 8px;background:#1a1509;';
+  const pdfBtn=document.createElement('button');pdfBtn.style.cssText='background:transparent;border:1px solid #c8a84a;color:#c8a84a;font-family:monospace;font-size:11px;padding:8px 18px;cursor:pointer;letter-spacing:1px;';
+  pdfBtn.textContent='📄 EXPORTAR EDIÇÃO EM PDF';
+  pdfBtn.onclick=function(){if(!lastNewspaper)return;const{paper,day,isAxis,np}=lastNewspaper;const c=isAxis?'#0a0800':'#8b0000';const html='<html><head><meta charset="UTF-8"><style>body{background:#f5f0e0;color:#1a1008;font-family:Georgia,serif;padding:24px;max-width:680px;margin:0 auto}h1{text-align:center;color:'+c+';font-size:26px;text-transform:uppercase;margin:6px 0}hr{border:none;border-top:2px solid #1a1008;margin:6px 0}h2{color:'+c+';font-size:17px;text-transform:uppercase}h3{color:'+c+';font-size:12px;text-transform:uppercase;border-top:1px solid #bbb;padding-top:6px;margin-top:10px}p{line-height:1.6;text-align:justify;margin-bottom:6px}.prop{background:'+c+';color:#fff;text-align:center;padding:10px;margin:12px 0;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase}.foot{border-top:1px solid #1a1008;margin-top:10px;font-size:8px;color:#777;text-align:center}</style></head><body><h1>'+paper+'</h1><hr><h2>'+(np.manchete_principal||'')+'</h2>'+(np.artigo_principal||'').split('\n\n').map(x=>'<p>'+x+'</p>').join('')+'<h3>'+(np.manchete_2||'')+'</h3><p>'+(np.noticia_2||'')+'</p><h3>'+(np.manchete_3||'')+'</h3><p>'+(np.noticia_3||'')+'</p><p style="font-style:italic">'+(np.editorial||'')+'</p><div class="prop">'+(np.propaganda||'')+'<br><span style="font-size:9px;font-weight:normal">'+(np.propaganda_sub||'')+'</span></div><div class="foot">'+paper+' · Simulação educacional · '+day.date+'</div></body></html>';const b=new Blob([html],{type:'text/html'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=(isAxis?'VB':'Pravda')+'_Dia'+day.day+'.html';a.style.display='none';document.body.appendChild(a);a.click();setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(u);},1000);};
+  pdfDiv.appendChild(pdfBtn);scroll.appendChild(pdfDiv);btn.disabled=false;
+}
+
+function renderDay(){
+  const d=DAYS[curDay];
+  document.getElementById('dayLabel').textContent='Dia '+d.day;document.getElementById('dayDate').textContent=d.date;
+  document.getElementById('hdrDate').textContent=d.date.toUpperCase()+' · '+d.time;
+  document.getElementById('btnPrev').disabled=curDay===0;document.getElementById('btnNext').disabled=curDay===DAYS.length-1;
+  document.getElementById('situationRows').innerHTML=d.situation.map(r=>'<div class="irow"><span>'+r.l+'</span><span class="ival '+r.c+'">'+r.v+'</span></div>').join('');
+  document.getElementById('forcesRows').innerHTML=d.forces.map(r=>'<div class="irow"><span>'+r.l+'</span><span class="ival">'+r.v+'</span></div>').join('');
+  const qa=document.getElementById('quickActions');qa.innerHTML='';
+  d.quick.forEach(q=>{const b=document.createElement('button');b.className='actbtn';b.textContent=q.i+' '+q.t.substring(0,30)+'...';b.addEventListener('click',()=>quick(q.t));qa.appendChild(b);});
+}
+
+function changeDay(dir){
+  curDay=Math.max(0,Math.min(DAYS.length-1,curDay+dir));renderDay();
+  const d=DAYS[curDay];
+  const n=['Início da invasão. Ataque surpresa devastou as defesas soviéticas.','Panzers avançam. Cerco de Bialystok em formação.','Minsk foi cercada. 300.000 soviéticos encurralados.','Smolensk no horizonte.','Avanço desacelera. Logística em colapso.','Hitler pausa Grupo Centro.','Cerco de Kiev se fechando.','Operação Tufão lançada.','Solo congelado retoma avanço. Moscou a 50 km.','Contraataque soviético iniciado.','Fim de 1941. Barbarossa fracassou.'];
+  addSysMsg('📅 <strong>'+d.date+' — Dia '+d.day+'.</strong> '+(n[curDay]||''));
+  fbLog('avancou_dia',{dia:d.day,data:d.date});
+}
+
+function switchTab(t){['chat','directive','map','newspaper'].forEach((id,i)=>{document.querySelector('.tab:nth-child('+(i+1)+')').classList.toggle('active',id===t);document.getElementById('tab-'+id).classList.toggle('active',id===t);});if(t==='map')setTimeout(()=>initMap(),80);if(t==='newspaper')updateNpDayLabel();}
+
+function selDel(btn){document.querySelectorAll('.dbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');cur=btn.dataset.id;const df=document.getElementById('dirFrom');if(df)for(let o of df.options)if(o.value===cur){o.selected=true;break;}fbLog('escolheu_delegado',{delegado:D[cur].name});}
+function quick(t){switchTab('chat');document.getElementById('inp').value=t;send();}
+function addSysMsg(html){const log=document.getElementById('chatLog');const d=document.createElement('div');d.className='msg system';d.innerHTML='<div class="mtext">'+html+'</div>';log.appendChild(d);log.scrollTop=log.scrollHeight;}
+function addMsg(role,name,text,soviet){const log=document.getElementById('chatLog');const d=document.createElement('div');d.className='msg '+(role==='user'?'user':'ai'+(soviet?' soviet-msg':''));d.innerHTML='<div class="mhdr'+(soviet?' soviet-hdr':'')+'">'+name+'</div><div class="mtext">'+text+'</div>';log.appendChild(d);log.scrollTop=log.scrollHeight;}
+function addBlock(title,html,cls){const log=document.getElementById('chatLog');const d=document.createElement('div');d.className='msg '+cls;d.innerHTML='<div class="mhdr" style="color:var(--gold2);margin-bottom:8px;font-size:10px;letter-spacing:3px">'+title+'</div><div class="mtext" style="font-family:\'Special Elite\',serif;font-size:12px;line-height:1.85">'+html+'</div>';log.appendChild(d);log.scrollTop=log.scrollHeight;return d;}
+function buildProbBar(pct,factors){const color=pct>=70?'#4a9a40':pct>=40?'#c8a84a':'#a02020';return '<div class="prob-block"><div class="prob-label">Probabilidade de Sucesso</div><div class="prob-bar-wrap"><div class="prob-bar" data-pct="'+pct+'%" style="width:'+pct+'%;background:'+color+'"></div></div><div class="prob-factors">'+(factors||[]).map(f=>'<div class="pfactor"><span>'+f.label+'</span><span class="pf-val '+(f.tipo==='pos'?'pos':f.tipo==='neg'?'neg':'neu')+'">'+f.valor+'</span></div>').join('')+'</div></div>';}
+function buildReplySelector(enc){const btns=Object.entries(D).map(([k,v])=>'<button class="reply-btn" onclick="generateReply(\''+k+'\',\''+enc+'\')">'+(v.soviet?'🇷🇺':'🇩🇪')+' '+v.name.split(' ').slice(-1)[0]+'</button>').join('');return '<div class="reply-selector"><p>// ESCOLHA QUEM ELABORA A RESPOSTA:</p><div class="reply-grid">'+btns+'</div></div>';}
+function addPDFBtn(){const log=document.getElementById('chatLog');const d=document.createElement('div');d.className='msg system';d.innerHTML='<button class="pdf-btn" onclick="exportPDF()">📄 EXPORTAR DIRETIVA COMPLETA EM PDF</button>';log.appendChild(d);log.scrollTop=log.scrollHeight;}
+
+async function send(){
+  const inp=document.getElementById('inp');const t=inp.value.trim();if(!t)return;
+  const del=D[cur];const dayInfo=DAYS[curDay];
+  const btn=document.getElementById('sbtn');btn.disabled=true;inp.value='';
+  addMsg('user','📨 '+(studentName||'Você'),t,false);hist.push({role:'user',content:t});
+  fbLog('mensagem',{texto:t,delegado:del.name,dia:dayInfo.day});
+  const typ=document.getElementById('typing');typ.textContent=del.name.split(' ').slice(-1)[0]+' redigindo despacho...';typ.classList.add('on');
+  const sys=del.persona+' Você é '+del.name+'. Contexto: '+dayInfo.date+', Dia '+dayInfo.day+' da Operação Barbarossa. Responda SEMPRE em português brasileiro, em caráter histórico educacional. Respostas concisas (3-4 parágrafos).';
+  try{const reply=await callClaude(sys,hist,900);hist.push({role:'assistant',content:reply});typ.classList.remove('on');addMsg('ai','['+del.name+' · '+dayInfo.date+']',reply.replace(/\n/g,'<br>'),del.soviet);fbLog('resposta_ia',{pergunta:t,resposta:reply.substring(0,500),delegado:del.name});}
+  catch(e){typ.classList.remove('on');addMsg('ai','Sistema','Erro: '+e.message,false);}
+  btn.disabled=false;inp.focus();
+}
+
+async function generateDirective(){
+  const tipo=document.getElementById('dirType').value;const to=document.getElementById('dirTo').value.trim();const subject=document.getElementById('dirSubject').value.trim();const content=document.getElementById('dirContent').value.trim();const classif=document.getElementById('dirClassif').value;const dayInfo=DAYS[curDay];
+  if(!to||!subject||!content){alert('Preencha todos os campos.');return;}
+  const btn=document.getElementById('dirBtn');btn.disabled=true;btn.textContent='⏳ GERANDO...';
+  const fromName=document.getElementById('dirFrom').options[document.getElementById('dirFrom').selectedIndex].text;
+  const tipoLabel=DIR_TYPES[tipo];
+  lastDirectiveText='';lastAnalysisText='';lastReplyText='';
+  try{
+    const [directiveText,anaRaw]=await Promise.all([
+      callClaude('Especialista em história militar WWII. Formate diretivas oficiais estilo gabinete de guerra 1941 em português brasileiro. Inclua: cabeçalho, classificação, protocolo fictício, data/hora, remetente, destinatário, assunto, corpo militar formal histórico, assinatura.',[{role:'user',content:'TIPO: '+tipoLabel+'\nREMETENTE: '+fromName+'\nDESTINATÁRIO: '+to+'\nASSUNTO: '+subject+'\nDATA: '+dayInfo.date+' — Dia '+dayInfo.day+'\nCLASSIFICAÇÃO: '+classif+'\nCONTEÚDO: '+content}],1100),
+      callClaude('Historiador militar Frente Oriental 1941. Retorne SOMENTE JSON sem markdown: {"probabilidade":85,"veredicto":"texto","justificativa":"2 frases.","fatores":[{"label":"texto","valor":"+15%","tipo":"pos"}]}. 3-5 fatores.',[{role:'user',content:'Analise probabilidade de sucesso:\nTIPO: '+tipoLabel+'\nREMETENTE: '+fromName+'\nDIA: '+dayInfo.day+'\nCONTEÚDO: '+content}],500)
+    ]);
+    let ana={probabilidade:50,veredicto:'Indeterminado',justificativa:'Análise indisponível.',fatores:[]};
+    try{ana=JSON.parse(anaRaw.replace(/```json|```/g,'').trim());}catch(e){}
+    lastDirectiveText=directiveText;
+    fbLog('diretiva',{tipo:tipoLabel,assunto:subject,texto:directiveText.substring(0,600),dia:dayInfo.day});
+    switchTab('chat');
+    addBlock('📜 DIRETIVA OFICIAL — '+tipoLabel.toUpperCase()+' · '+classif,directiveText.replace(/\n/g,'<br>'),'directive');
+    const pct=Math.min(100,Math.max(0,ana.probabilidade||50));
+    lastAnalysisText='Probabilidade: '+pct+'%\n'+ana.veredicto+'\n'+ana.justificativa;
+    addBlock('📊 ANÁLISE HISTÓRICA DE PROBABILIDADE',buildProbBar(pct,ana.fatores)+'<div style="margin-top:10px;font-size:11px;color:var(--text);line-height:1.7"><strong style="color:#8a8acc">'+ana.veredicto+'</strong><br>'+ana.justificativa+'</div>','analysis');
+    const enc=encodeURIComponent(directiveText);
+    const rs=document.createElement('div');rs.className='msg analysis';rs.innerHTML=buildReplySelector(enc);
+    document.getElementById('chatLog').appendChild(rs);document.getElementById('chatLog').scrollTop=99999;
+  }catch(e){alert('Erro: '+e.message);}
+  btn.disabled=false;btn.textContent='⚡ GERAR DIRETIVA + ANÁLISE';
+}
+
+async function generateReply(responderId,encodedDirective){
+  const directiveText=decodeURIComponent(encodedDirective);const responder=D[responderId];const dayInfo=DAYS[curDay];
+  document.querySelectorAll('.reply-selector').forEach(el=>el.remove());
+  addSysMsg('✉️ <strong>'+responder.name+'</strong> elaborando resposta...');
+  try{
+    const reply=await callClaude('Você é '+responder.name+' durante a Operação Barbarossa em '+dayInfo.date+'. Responda em português brasileiro. Elabore RESPOSTA FORMAL estilo gabinete 1941: cabeçalho, protocolo, posicionamento oficial, argumentação histórica do Dia '+dayInfo.day+', assinatura.',[{role:'user',content:'DIRETIVA RECEBIDA:\n'+directiveText+'\n\nElabore sua resposta oficial em português brasileiro.'}],1100);
+    lastReplyText=reply;
+    fbLog('resposta_diretiva',{respondente:responder.name,texto:reply.substring(0,500)});
+    addBlock('↩️ RESPOSTA OFICIAL — '+responder.name.toUpperCase()+' · '+dayInfo.date,reply.replace(/\n/g,'<br>'),'reply-dir');
+    addPDFBtn();
+  }catch(e){addSysMsg('Erro: '+e.message);}
+}
+
+async function exportPDF(){
+  const {jsPDF}=window.jspdf;const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const margin=18,pageW=210,cW=pageW-margin*2;let y=20;
+  function addSec(title,text,color){doc.setFontSize(9);doc.setTextColor(150,120,60);doc.text(title,margin,y);y+=5;doc.setDrawColor(150,120,60);doc.line(margin,y,pageW-margin,y);y+=5;doc.setFontSize(10);doc.setTextColor(...(color||[220,210,180]));const clean=text.replace(/<br\s*\/?>/gi,'\n').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&');doc.splitTextToSize(clean,cW).forEach(l=>{if(y>275){doc.addPage();y=20;}doc.text(l,margin,y);y+=5;});y+=6;}
+  doc.setFillColor(20,16,8);doc.rect(0,0,210,297,'F');doc.setFontSize(14);doc.setTextColor(200,168,74);doc.setFont('helvetica','bold');doc.text('GABINETE DE GUERRA — OPERAÇÃO BARBAROSSA',margin,y);y+=7;doc.setFontSize(9);doc.setTextColor(138,122,96);doc.text(DAYS[curDay].date+' · Dia '+DAYS[curDay].day+' · Classificação: '+(document.getElementById('dirClassif')?.value||'RESERVADO'),margin,y);y+=10;doc.setDrawColor(200,168,74);doc.line(margin,y,pageW-margin,y);y+=8;
+  if(lastDirectiveText)addSec('DIRETIVA OFICIAL',lastDirectiveText);
+  if(lastAnalysisText)addSec('ANÁLISE HISTÓRICA',lastAnalysisText,[180,180,220]);
+  if(lastReplyText)addSec('RESPOSTA OFICIAL',lastReplyText,[220,180,180]);
+  doc.setFontSize(8);doc.setTextColor(80,70,50);doc.text('Simulação educacional — Gabinete de Guerra · Operação Barbarossa',margin,288);
+  doc.save('Diretiva_Barbarossa_Dia'+DAYS[curDay].day+'.pdf');
+}
+
+function clearForm(){document.getElementById('dirTo').value='';document.getElementById('dirSubject').value='';document.getElementById('dirContent').value='';}
+
+renderDay();
+checkInit();
+</script>
+</body>
+</html>
