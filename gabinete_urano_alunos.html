@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSÃO 4 - CORRIGIDO - 12/05/2025 -->
+<!-- VERSÃO 5 - PRONUNCIAMENTO + CRISE - 12/05/2025 -->
 
 <html lang="pt-BR">
 <head>
@@ -1152,12 +1152,7 @@ async function generatePronunciamento(){
   try{
     var pronText = await callClaude(
       'Especialista em história militar e diplomacia soviética 1942. Formate Pronunciamentos Externos oficiais do Exército Vermelho / URSS em português brasileiro. Inclua: cabeçalho STAVKA/URSS, nível de sigilo, número de protocolo fictício, data/hora, remetente, destinatário, assunto, corpo formal com tom ideológico soviético de 1942 (pode ser mais retórico e político que uma ordem militar), assinatura.',
-      [{role:'user',content:'REMETENTE: '+fromName+'
-DESTINATÁRIO: '+to+'
-ASSUNTO: '+subject+'
-DATA: '+dayInfo.date+' — Dia '+dayInfo.day+' da Operação Urano
-CLASSIFICAÇÃO: '+classif+'
-CONTEÚDO: '+content}],
+            [{role:'user',content:'REMETENTE: '+fromName+' | DESTINATÁRIO: '+to+' | ASSUNTO: '+subject+' | DATA: '+dayInfo.date+' Dia '+dayInfo.day+' da Operação Urano | CLASSIFICAÇÃO: '+classif+' | CONTEÚDO: '+content}],
       1200
     );
     fbLog('pronunciamento',{assunto:subject,texto:pronText.substring(0,600),dia:dayInfo.day});
