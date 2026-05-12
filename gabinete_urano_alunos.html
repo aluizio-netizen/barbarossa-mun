@@ -385,8 +385,14 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 
     <!-- DIRECTIVE TAB -->
     <div class="tabpanel" id="tab-directive">
-      <div class="dirform">
-        <div class="msg system" style="display:block"><div class="mtext">📜 Preencha o formulário. A IA irá <strong>(1)</strong> formatar a diretiva no estilo soviético 1942, <strong>(2)</strong> analisar probabilidade histórica e <strong>(3)</strong> permitir escolher quem responde.</div></div>
+      <div style="display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface2)">
+  <button class="tab active" id="subtab-ordem" onclick="setDirMode('ordem')" style="flex:1;font-size:9px">📜 Ordem de Guerra</button>
+  <button class="tab" id="subtab-pronunciamento" onclick="setDirMode('pronunciamento')" style="flex:1;font-size:9px">📢 Pronunciamento Externo</button>
+</div>
+
+<!-- ORDEM DE GUERRA -->
+<div class="dirform" id="dirform-ordem">
+        <div class="msg system" style="display:block"><div class="mtext">📜 Preencha o formulário. A IA irá <strong>(1)</strong> formatar a diretiva no estilo soviético 1942, <strong>(2)</strong> analisar probabilidade histórica e <strong>(3)</strong> permitir escolher quem responde. Limite: <strong>5 ordens por sessão</strong>.</div></div>
         <div class="dfield"><label>Tipo de Diretiva</label>
           <select id="dirType">
             <option value="solicitacao">1. Solicitação de Informação</option>
@@ -397,6 +403,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
             <option value="plano">6. Plano de Batalha / Ordem Operacional</option>
             <option value="reestruturacao">7. Reestruturação Militar</option>
             <option value="logistica">8. Ordem Logística de Abastecimento</option>
+            <option value="pronunciamento">9. Pronunciamento Externo à Comunidade Internacional</option>
           </select>
         </div>
         <div class="dfield"><label>Remetente</label>
@@ -420,9 +427,46 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
         <div class="dfield"><label>Nível de Sigilo</label>
           <select id="dirClassif"><option value="SECRETO">SECRETO</option><option value="ULTRASSECRETO">ULTRASSECRETO</option><option value="RESERVADO">RESERVADO</option><option value="PÚBLICO">PÚBLICO</option></select>
         </div>
-        <button class="dirbtn" id="dirBtn" onclick="generateDirective()">⚡ GERAR DIRETIVA + ANÁLISE</button>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+  <button class="dirbtn" id="dirBtn" onclick="generateDirective()" style="flex:1;margin-top:0">⚡ GERAR DIRETIVA + ANÁLISE</button>
+  <div id="orderCounter" style="background:var(--surface2);border:1px solid var(--border2);padding:6px 10px;text-align:center;flex-shrink:0;min-width:70px">
+    <div style="font-size:8px;color:var(--muted);letter-spacing:2px;text-transform:uppercase">Ordens</div>
+    <div id="orderCountDisplay" style="font-size:16px;font-weight:700;color:var(--green3)">0/5</div>
+  </div>
+</div>
         <button class="dirbtn secondary" onclick="clearForm()">✕ Limpar</button>
       </div>
+
+<!-- PRONUNCIAMENTO EXTERNO -->
+<div class="dirform" id="dirform-pronunciamento" style="display:none">
+  <div class="msg system" style="display:block"><div class="mtext">📢 <strong>Pronunciamento Externo</strong> — Comunicado oficial à comunidade internacional. Diferente da Ordem de Guerra, este documento expressa posicionamento político, diplomático ou ideológico do comitê. Deve ser assinado pelo(s) líder(es). <strong>Não conta no limite de 5 ordens por sessão.</strong></div></div>
+  <div class="dfield"><label>Remetente / Assinante</label>
+    <select id="pronFrom">
+      <option value="zhukov">Gen. Zhukov — Vice-Cmd. Supremo do Exército Vermelho</option>
+      <option value="vasilevsky">Gen. Vasilevsky — Chefe do Estado-Maior</option>
+      <option value="yeremenko">Gen. Yeremenko — Frente de Stalingrado</option>
+      <option value="shumilov">★ Gen. Shumilov — Cmd. 64° Exército</option>
+      <option value="mikhailov">★ Gen. Mikhailov — Apoio Logístico</option>
+      <option value="khrushchev">Khrushchev — Comissário Político</option>
+    </select>
+  </div>
+  <div class="dfield"><label>Destinatário / Público-alvo</label>
+    <input type="text" id="pronTo" placeholder="Ex: Comunidade Internacional, Forças do Eixo, Povo Soviético..."/></div>
+  <div class="dfield"><label>Assunto</label>
+    <input type="text" id="pronSubject" placeholder="Ex: Cerco de Stalingrado, Resistência do Exército Vermelho..."/></div>
+  <div class="dfield"><label>Conteúdo do Pronunciamento</label>
+    <textarea id="pronContent" placeholder="Descreva o posicionamento que o pronunciamento deve expressar. A IA irá formatar no estilo de comunicado oficial soviético de 1942."></textarea></div>
+  <div class="dfield"><label>Nível de Sigilo</label>
+    <select id="pronClassif">
+      <option value="PÚBLICO">PÚBLICO</option>
+      <option value="RESERVADO">RESERVADO</option>
+      <option value="SECRETO">SECRETO</option>
+    </select>
+  </div>
+  <button class="dirbtn" id="pronBtn" onclick="generatePronunciamento()">📢 GERAR PRONUNCIAMENTO</button>
+  <button class="dirbtn secondary" onclick="clearPronForm()">✕ Limpar</button>
+</div>
+
     </div>
 
     <!-- MAP TAB -->
@@ -605,7 +649,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 <!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, doc, setDoc, serverTimestamp, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getFirestore, doc, setDoc, serverTimestamp, collection, addDoc, onSnapshot, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 const fb = initializeApp({
   apiKey:"AIzaSyCOMmKs-WXGbx-CseFBaD7ISB6HZjBoamk",
   authDomain:"barbarossa-mun.firebaseapp.com",
@@ -617,8 +661,14 @@ const fb = initializeApp({
 const db = getFirestore(fb);
 window._db = db;
 window._fbFns = { doc, setDoc, serverTimestamp, collection, addDoc };
+window._fbFns.onSnapshot = onSnapshot;
+window._fbFns.query = query;
+window._fbFns.orderBy = orderBy;
+window._fbFns.limit = limit;
 window._fbReady = true;
 document.getElementById('fbBadge').innerHTML = '<div class="fb-dot"></div><span>MONITORADO PELO PROFESSOR</span>';
+// Iniciar listener de crises (aguarda studentCode estar disponível)
+setTimeout(startCriseListener, 2000);
 </script>
 
 <script>
@@ -626,6 +676,8 @@ let API_KEY = localStorage.getItem('barb_api_key') || '';
 let studentName = '', studentCode = 'urano-geral';
 let curDay = 0, cur = 'zhukov', hist = [];
 let lastDirectiveText = '', lastAnalysisText = '', lastReplyText = '';
+let sessionOrders = 0;
+const MAX_ORDERS = 5;
 let lastNewspaper = null, currentPaper = 'soviet';
 
 const D = {
@@ -752,7 +804,7 @@ const DAYS = [
    quick:[{i:'🎯',t:'O cerco foi fechado — como consolidar o anel externo de contenção?'},{i:'⚙️',t:'Como organizar o bloqueio logístico total ao 6° Exército cercado?'},{i:'🛡️',t:'A Operação Inverno de Manstein pode romper o cerco — como nos preparar?'},{i:'📦',t:'Quais recursos logísticos são necessários para manter o cerco por semanas?'},{i:'🏴',t:'Qual a estimativa de tempo até a capitulação do 6° Exército?'}]},
 ];
 
-const DIR_TYPES = {solicitacao:'Solicitação de Informação',correspondencia:'Correspondência Entre Personagens',negociacao:'Negociação / Acordo',espionagem:'Espionagem / Inteligência Militar',imprensa:'Comunicado de Imprensa / Pravda',plano:'Plano de Batalha / Ordem Operacional',reestruturacao:'Reestruturação Militar',logistica:'Ordem Logística de Abastecimento'};
+const DIR_TYPES = {solicitacao:'Solicitação de Informação',correspondencia:'Correspondência Entre Personagens',negociacao:'Negociação / Acordo',espionagem:'Espionagem / Inteligência Militar',imprensa:'Comunicado de Imprensa / Pravda',plano:'Plano de Batalha / Ordem Operacional',reestruturacao:'Reestruturação Militar',logistica:'Ordem Logística de Abastecimento',pronunciamento:'Pronunciamento Externo'};
 
 
 // ── MAPA — OPERAÇÃO URANO ─────────────────────────────────────────────
@@ -1012,6 +1064,12 @@ async function send(){
 
 // ── DIRETIVA ──────────────────────────────────────────────────────────
 async function generateDirective(){
+  // Verificar limite de ordens por sessão (Manual Internationali Negotia: máx. 5)
+  if(sessionOrders >= MAX_ORDERS){
+    addSysMsg('⚠️ <strong>LIMITE DE ORDENS ATINGIDO.</strong> O Manual da Internationali Negotia limita a <strong>5 ordens por sessão</strong>. Documentos além deste limite serão desconsiderados pelo secretariado. Aguarde o próximo timeskip para emitir novas ordens.');
+    switchTab('chat');
+    return;
+  }
   const tipo=document.getElementById('dirType').value;const to=document.getElementById('dirTo').value.trim();
   const subject=document.getElementById('dirSubject').value.trim();const content=document.getElementById('dirContent').value.trim();
   const classif=document.getElementById('dirClassif').value;const dayInfo=DAYS[curDay];
@@ -1029,6 +1087,9 @@ async function generateDirective(){
     try{ana=JSON.parse(anaRaw.replace(/```json|```/g,'').trim());}catch(e){}
     lastDirectiveText=directiveText;
     fbLog('diretiva',{tipo:tipoLabel,assunto:subject,texto:directiveText.substring(0,600),dia:dayInfo.day});
+    // Incrementar contador de ordens da sessão
+    sessionOrders++;
+    updateOrderCounter();
     switchTab('chat');
     addBlock('📜 DIRETIVA OFICIAL — '+tipoLabel.toUpperCase()+' · '+classif,directiveText.replace(/\n/g,'<br>'),'directive');
     const pct=Math.min(100,Math.max(0,ana.probabilidade||60));
@@ -1068,6 +1129,67 @@ async function exportPDF(){
 
 // ── UTILS ─────────────────────────────────────────────────────────────
 function clearForm(){document.getElementById('dirTo').value='';document.getElementById('dirSubject').value='';document.getElementById('dirContent').value='';}
+function clearPronForm(){document.getElementById('pronTo').value='';document.getElementById('pronSubject').value='';document.getElementById('pronContent').value='';}
+
+function setDirMode(mode){
+  var isOrdem = mode === 'ordem';
+  document.getElementById('dirform-ordem').style.display = isOrdem ? 'flex' : 'none';
+  document.getElementById('dirform-pronunciamento').style.display = isOrdem ? 'none' : 'flex';
+  document.getElementById('subtab-ordem').classList.toggle('active', isOrdem);
+  document.getElementById('subtab-pronunciamento').classList.toggle('active', !isOrdem);
+}
+
+async function generatePronunciamento(){
+  var to = document.getElementById('pronTo').value.trim();
+  var subject = document.getElementById('pronSubject').value.trim();
+  var content = document.getElementById('pronContent').value.trim();
+  var classif = document.getElementById('pronClassif').value;
+  var dayInfo = DAYS[curDay];
+  if(!to||!subject||!content){alert('Preencha todos os campos.');return;}
+  var btn = document.getElementById('pronBtn');
+  btn.disabled=true; btn.textContent='⏳ GERANDO...';
+  var fromName = document.getElementById('pronFrom').options[document.getElementById('pronFrom').selectedIndex].text;
+  try{
+    var pronText = await callClaude(
+      'Especialista em história militar e diplomacia soviética 1942. Formate Pronunciamentos Externos oficiais do Exército Vermelho / URSS em português brasileiro. Inclua: cabeçalho STAVKA/URSS, nível de sigilo, número de protocolo fictício, data/hora, remetente, destinatário, assunto, corpo formal com tom ideológico soviético de 1942 (pode ser mais retórico e político que uma ordem militar), assinatura.',
+      [{role:'user',content:'REMETENTE: '+fromName+'
+DESTINATÁRIO: '+to+'
+ASSUNTO: '+subject+'
+DATA: '+dayInfo.date+' — Dia '+dayInfo.day+' da Operação Urano
+CLASSIFICAÇÃO: '+classif+'
+CONTEÚDO: '+content}],
+      1200
+    );
+    fbLog('pronunciamento',{assunto:subject,texto:pronText.substring(0,600),dia:dayInfo.day});
+    switchTab('chat');
+    addBlock('📢 PRONUNCIAMENTO EXTERNO — '+classif+' · '+dayInfo.date, pronText.replace(/\n/g,'<br>'), 'directive');
+    // Botão de exportar PDF
+    var log=document.getElementById('chatLog');
+    var d=document.createElement('div');
+    d.className='msg system';
+    d.innerHTML='<button class="pdf-btn" onclick="exportPronPDF('+JSON.stringify(pronText).replace(/</g,'&lt;')+','+JSON.stringify(fromName)+')">📄 EXPORTAR PRONUNCIAMENTO EM PDF</button>';
+    log.appendChild(d);log.scrollTop=log.scrollHeight;
+  }catch(e){addSysMsg('Erro: '+e.message);}
+  btn.disabled=false; btn.textContent='📢 GERAR PRONUNCIAMENTO';
+}
+
+function exportPronPDF(pronText, fromName){
+  var {jsPDF}=window.jspdf;
+  var doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  var margin=18,pageW=210,cW=pageW-margin*2;var y=20;
+  doc.setFillColor(20,16,8);doc.rect(0,0,210,297,'F');
+  doc.setFontSize(13);doc.setTextColor(200,168,74);doc.setFont('helvetica','bold');
+  doc.text('PRONUNCIAMENTO EXTERNO — EXÉRCITO VERMELHO / URSS',margin,y);y+=7;
+  doc.setFontSize(9);doc.setTextColor(138,122,96);
+  doc.text(DAYS[curDay].date+' · Dia '+DAYS[curDay].day+' · Remetente: '+fromName,margin,y);y+=10;
+  doc.setDrawColor(200,168,74);doc.line(margin,y,pageW-margin,y);y+=8;
+  doc.setFontSize(10);doc.setTextColor(220,210,180);doc.setFont('helvetica','normal');
+  var clean=pronText.replace(/<br\s*\/?>/gi,'\n').replace(/<[^>]+>/g,'');
+  doc.splitTextToSize(clean,cW).forEach(function(l){if(y>275){doc.addPage();y=20;}doc.text(l,margin,y);y+=5;});
+  doc.setFontSize(8);doc.setTextColor(80,70,50);
+  doc.text('Simulação educacional — Gabinete de Guerra · Operação Urano · Internationali Negotia MUN',margin,288);
+  doc.save('Pronunciamento_OperacaoUrano_Dia'+DAYS[curDay].day+'.pdf');
+}
 function switchTab(t){['chat','directive','map','newspaper','dpo','tactical'].forEach((id,i)=>{document.querySelectorAll('.tab')[i].classList.toggle('active',id===t);document.getElementById('tab-'+id).classList.toggle('active',id===t);});if(t==='map')setTimeout(()=>initMap(),80);if(t==='newspaper')updateNpDayLabel();if(t==='tactical')setTimeout(()=>initTacMap(),80);}
 function selDel(btn){document.querySelectorAll('.dbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');cur=btn.dataset.id;const df=document.getElementById('dirFrom');if(df)for(let o of df.options)if(o.value===cur){o.selected=true;break;}document.getElementById('sideRole').textContent=D[cur]?.name||'—';fbLog('escolheu_delegado',{delegado:D[cur].name});}
 function quick(t){switchTab('chat');document.getElementById('inp').value=t;send();}
@@ -1077,6 +1199,31 @@ function addBlock(title,html,cls){const log=document.getElementById('chatLog');c
 function buildProbBar(pct,factors){const color=pct>=70?'#4a9a40':pct>=40?'#c8a84a':'#a02020';return '<div class="prob-block"><div class="prob-label">Probabilidade de Sucesso</div><div class="prob-bar-wrap"><div class="prob-bar" data-pct="'+pct+'%" style="width:'+pct+'%;background:'+color+'"></div></div><div class="prob-factors">'+(factors||[]).map(f=>'<div class="pfactor"><span>'+f.label+'</span><span class="pf-val '+(f.tipo==='pos'?'pos':f.tipo==='neg'?'neg':'neu')+'">'+f.valor+'</span></div>').join('')+'</div></div>';}
 function buildReplySelector(enc){const btns=Object.entries(D).map(([k,v])=>'<button class="reply-btn" onclick="generateReply(\''+k+'\',\''+enc+'\')">🇷🇺 '+v.name.split(' ').slice(-1)[0]+'</button>').join('');return '<div class="reply-selector"><p>// ESCOLHA QUEM ELABORA A RESPOSTA:</p><div class="reply-grid">'+btns+'</div></div>';}
 function addPDFBtn(){const log=document.getElementById('chatLog');const d=document.createElement('div');d.className='msg system';d.innerHTML='<button class="pdf-btn" onclick="exportPDF()">📄 EXPORTAR DIRETIVA COMPLETA EM PDF</button>';log.appendChild(d);log.scrollTop=log.scrollHeight;}
+
+function updateOrderCounter(){
+  const remaining = MAX_ORDERS - sessionOrders;
+  const display = document.getElementById('orderCountDisplay');
+  if(!display) return;
+  display.textContent = sessionOrders + '/' + MAX_ORDERS;
+  display.style.color = sessionOrders >= MAX_ORDERS ? 'var(--soviet)' : sessionOrders >= 4 ? 'var(--gold)' : 'var(--green3)';
+  const btn = document.getElementById('dirBtn');
+  if(btn){
+    if(sessionOrders >= MAX_ORDERS){
+      btn.style.opacity = '0.4';
+      btn.style.cursor = 'not-allowed';
+      btn.textContent = '🚫 LIMITE ATINGIDO (5/5)';
+    } else {
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+      btn.textContent = '⚡ GERAR DIRETIVA + ANÁLISE';
+    }
+  }
+  // Atualizar também na aba de diretiva com aviso visual
+  const counter = document.getElementById('orderCounter');
+  if(counter){
+    counter.style.borderColor = sessionOrders >= MAX_ORDERS ? 'var(--soviet)' : sessionOrders >= 4 ? 'var(--gold2)' : 'var(--border2)';
+  }
+}
 
 function renderDay(){
   const d=DAYS[curDay];
@@ -1093,6 +1240,9 @@ function renderDay(){
 }
 
 function changeDay(dir){
+  // Timeskip: resetar contador de ordens
+  sessionOrders = 0;
+  updateOrderCounter();
   curDay=Math.max(0,Math.min(DAYS.length-1,curDay+dir));renderDay();
   const d=DAYS[curDay];
   const notes=['Hora H! A Operação Urano é desencadeada. Os braços norte e sul avançam simultaneamente pelas linhas romenas.','Os panzers soviéticos avançam 80 km em dois dias. Kalach está na mira e o cerco se aproxima.','O cerco se fecha em Kalach. 330.000 soldados alemães e aliados do Eixo estão encerclados.'];
@@ -1360,5 +1510,112 @@ window.addEventListener('load', function() {
   } catch(e) { console.warn('Foto DPO:', e); }
 });
 </script>
+
+<!-- MODAL DE CRISE -->
+<div class="modal-overlay hidden" id="modalCrise" style="z-index:10000">
+  <div class="modal" style="border-color:var(--soviet);border-width:2px;max-width:480px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="font-size:28px;animation:blink 1s step-end infinite">⚠️</div>
+      <div>
+        <h2 style="color:var(--soviet);font-size:16px;letter-spacing:2px">ALERTA DE CRISE</h2>
+        <div style="font-size:9px;color:var(--muted);letter-spacing:2px">STAVKA · SECRETARIADO</div>
+      </div>
+    </div>
+    <div style="background:rgba(200,64,64,0.08);border:1px solid var(--red2);border-left:3px solid var(--soviet);padding:12px;margin-bottom:12px">
+      <div style="font-size:9px;color:var(--soviet);letter-spacing:2px;margin-bottom:6px" id="criseLabel">CRISE Nº 001</div>
+      <div style="font-size:12px;color:var(--text);line-height:1.7;font-family:'Special Elite',serif" id="criseTexto">—</div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:10px">O secretariado injetou uma situação-problema. Debata com os demais oficiais e emita as ordens necessárias.</div>
+    <button class="modal-btn" onclick="fecharCrise()" style="background:var(--soviet);letter-spacing:2px">⚡ ENTENDIDO — ENTRAR EM AÇÃO</button>
+  </div>
+</div>
+
+<script>
+// ── MECANISMO DE CRISE ───────────────────────────────────────────────
+var criseListenerAtivo = false;
+var ultimaCriseId = localStorage.getItem('ultima_crise_id') || '';
+
+function startCriseListener(){
+  if(criseListenerAtivo || !window._fbReady || !studentCode) return;
+  try {
+    var db = window._db;
+    var { onSnapshot, query, orderBy, limit } = window._fbFns;
+    var { collection } = window._fbFns;
+    // Escuta a coleção crises/{missionCode}/eventos
+    var q = query(
+      collection(db, 'crises', studentCode, 'eventos'),
+      orderBy('timestamp', 'desc'),
+      limit(1)
+    );
+    onSnapshot(q, function(snap){
+      snap.docChanges().forEach(function(change){
+        if(change.type === 'added'){
+          var data = change.doc.data();
+          var criseId = change.doc.id;
+          // Só mostrar se for nova (não vista ainda)
+          if(criseId !== ultimaCriseId){
+            ultimaCriseId = criseId;
+            localStorage.setItem('ultima_crise_id', criseId);
+            exibirCrise(data, criseId);
+          }
+        }
+      });
+    });
+    criseListenerAtivo = true;
+    console.log('[Crise] Listener ativo para missão:', studentCode);
+  } catch(e) { console.warn('[Crise] Listener erro:', e.message); }
+}
+
+function exibirCrise(data, criseId){
+  var num = data.numero || '001';
+  var texto = data.texto || 'Situação crítica detectada. Aguarde instruções do secretariado.';
+  var titulo = data.titulo || 'NOVA CRISE';
+
+  // Atualizar modal
+  document.getElementById('criseLabel').textContent = 'CRISE Nº ' + num + ' — ' + titulo.toUpperCase();
+  document.getElementById('criseTexto').textContent = texto;
+  document.getElementById('modalCrise').classList.remove('hidden');
+
+  // Também adicionar no chat como mensagem urgente
+  var log = document.getElementById('chatLog');
+  var d = document.createElement('div');
+  d.className = 'msg system';
+  d.style.cssText = 'border-left:3px solid var(--soviet);background:rgba(200,64,64,0.08);';
+  d.innerHTML = '<div class="mtext">⚠️ <strong style="color:var(--soviet)">CRISE Nº ' + num + ' — ' + titulo.toUpperCase() + '</strong><br>' + texto + '<br><em style="font-size:10px;color:var(--muted)">Secretariado · ' + new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}) + '</em></div>';
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+
+  // Ir para o chat
+  switchTab('chat');
+
+  // Piscar o badge
+  var badge = document.getElementById('fbBadge');
+  if(badge){
+    badge.style.borderColor = 'var(--soviet)';
+    badge.innerHTML = '<div class="fb-dot" style="background:var(--soviet)"></div><span style="color:var(--soviet)">⚠️ CRISE ATIVA</span>';
+    setTimeout(function(){
+      badge.style.borderColor = '';
+      badge.innerHTML = '<div class="fb-dot"></div><span>MONITORADO PELO PROFESSOR</span>';
+    }, 10000);
+  }
+}
+
+function fecharCrise(){
+  document.getElementById('modalCrise').classList.add('hidden');
+}
+
+// Retentar o listener quando o aluno fizer login (studentCode disponível)
+var _origSave = typeof saveStudentName !== 'undefined' ? saveStudentName : null;
+window.addEventListener('load', function(){
+  // Tentar iniciar listener periodicamente até studentCode estar disponível
+  var interval = setInterval(function(){
+    if(studentCode && studentCode !== 'urano-geral'){
+      startCriseListener();
+      clearInterval(interval);
+    }
+  }, 1500);
+});
+</script>
+
 </body>
 </html>
