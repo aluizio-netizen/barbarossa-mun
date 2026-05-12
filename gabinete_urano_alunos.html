@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSÃO 5 - PRONUNCIAMENTO + CRISE - 12/05/2025 -->
+<!-- VERSÃO 6 - ESCOPO CORRIGIDO - 12/05/2025 -->
 
 <html lang="pt-BR">
 <head>
@@ -667,8 +667,6 @@ window._fbFns.orderBy = orderBy;
 window._fbFns.limit = limit;
 window._fbReady = true;
 document.getElementById('fbBadge').innerHTML = '<div class="fb-dot"></div><span>MONITORADO PELO PROFESSOR</span>';
-// Iniciar listener de crises (aguarda studentCode estar disponível)
-setTimeout(startCriseListener, 2000);
 </script>
 
 <script>
@@ -1492,9 +1490,7 @@ const TAC_UNITS_ORIG = TAC_UNITS.map(u => ({id:u.id, lat:u.lat, lng:u.lng}));
 
 renderDay();
 checkInit();
-</script>
 
-<script>
 // Setar fotos dos DPOs na aba visual
 window.addEventListener('load', function() {
   try {
@@ -1504,28 +1500,7 @@ window.addEventListener('load', function() {
     var elMik = document.getElementById('raw-foto-mikhailov'); if(imgMik && elMik) imgMik.src = elMik.src;
   } catch(e) { console.warn('Foto DPO:', e); }
 });
-</script>
 
-<!-- MODAL DE CRISE -->
-<div class="modal-overlay hidden" id="modalCrise" style="z-index:10000">
-  <div class="modal" style="border-color:var(--soviet);border-width:2px;max-width:480px">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-      <div style="font-size:28px;animation:blink 1s step-end infinite">⚠️</div>
-      <div>
-        <h2 style="color:var(--soviet);font-size:16px;letter-spacing:2px">ALERTA DE CRISE</h2>
-        <div style="font-size:9px;color:var(--muted);letter-spacing:2px">STAVKA · SECRETARIADO</div>
-      </div>
-    </div>
-    <div style="background:rgba(200,64,64,0.08);border:1px solid var(--red2);border-left:3px solid var(--soviet);padding:12px;margin-bottom:12px">
-      <div style="font-size:9px;color:var(--soviet);letter-spacing:2px;margin-bottom:6px" id="criseLabel">CRISE Nº 001</div>
-      <div style="font-size:12px;color:var(--text);line-height:1.7;font-family:'Special Elite',serif" id="criseTexto">—</div>
-    </div>
-    <div style="font-size:10px;color:var(--muted);margin-bottom:10px">O secretariado injetou uma situação-problema. Debata com os demais oficiais e emita as ordens necessárias.</div>
-    <button class="modal-btn" onclick="fecharCrise()" style="background:var(--soviet);letter-spacing:2px">⚡ ENTENDIDO — ENTRAR EM AÇÃO</button>
-  </div>
-</div>
-
-<script>
 // ── MECANISMO DE CRISE ───────────────────────────────────────────────
 var criseListenerAtivo = false;
 var ultimaCriseId = localStorage.getItem('ultima_crise_id') || '';
@@ -1611,6 +1586,29 @@ window.addEventListener('load', function(){
   }, 1500);
 });
 </script>
+
+
+
+<!-- MODAL DE CRISE -->
+<div class="modal-overlay hidden" id="modalCrise" style="z-index:10000">
+  <div class="modal" style="border-color:var(--soviet);border-width:2px;max-width:480px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="font-size:28px;animation:blink 1s step-end infinite">⚠️</div>
+      <div>
+        <h2 style="color:var(--soviet);font-size:16px;letter-spacing:2px">ALERTA DE CRISE</h2>
+        <div style="font-size:9px;color:var(--muted);letter-spacing:2px">STAVKA · SECRETARIADO</div>
+      </div>
+    </div>
+    <div style="background:rgba(200,64,64,0.08);border:1px solid var(--red2);border-left:3px solid var(--soviet);padding:12px;margin-bottom:12px">
+      <div style="font-size:9px;color:var(--soviet);letter-spacing:2px;margin-bottom:6px" id="criseLabel">CRISE Nº 001</div>
+      <div style="font-size:12px;color:var(--text);line-height:1.7;font-family:'Special Elite',serif" id="criseTexto">—</div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:10px">O secretariado injetou uma situação-problema. Debata com os demais oficiais e emita as ordens necessárias.</div>
+    <button class="modal-btn" onclick="fecharCrise()" style="background:var(--soviet);letter-spacing:2px">⚡ ENTENDIDO — ENTRAR EM AÇÃO</button>
+  </div>
+</div>
+
+
 
 </body>
 </html>
