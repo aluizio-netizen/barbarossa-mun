@@ -242,6 +242,19 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
       <button onclick="connectLive()">⚡ MONITORAR AO VIVO</button>
     </div>
 
+    <div class="icard" style="margin:6px 8px 0;background:rgba(139,26,26,0.12);border:1px solid var(--red2)">
+      <h3 style="color:var(--red3)">Injetar Crise</h3>
+      <div style="font-size:9px;color:var(--muted);margin-bottom:8px;line-height:1.6">Envie uma situação-problema aos delegados em tempo real. O modal de crise aparecerá na tela de todos os alunos conectados.</div>
+      <label style="font-size:8px;color:var(--red3);letter-spacing:2px;display:block;margin-bottom:4px;text-transform:uppercase">Nº da Crise</label>
+      <input type="text" id="criseNum" placeholder="Ex: 001" value="001" style="width:100%;background:var(--bg);border:1px solid var(--red2);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 8px;outline:none;margin-bottom:5px"/>
+      <label style="font-size:8px;color:var(--red3);letter-spacing:2px;display:block;margin-bottom:4px;text-transform:uppercase">Título</label>
+      <input type="text" id="criseTitulo" placeholder="Ex: Contraataque Alemão no Flanco Sul" style="width:100%;background:var(--bg);border:1px solid var(--red2);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 8px;outline:none;margin-bottom:5px"/>
+      <label style="font-size:8px;color:var(--red3);letter-spacing:2px;display:block;margin-bottom:4px;text-transform:uppercase">Descrição da Crise</label>
+      <textarea id="criseTexto" rows="4" placeholder="Descreva a situação-problema que os delegados devem resolver..." style="width:100%;background:var(--bg);border:1px solid var(--red2);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 8px;outline:none;resize:vertical;margin-bottom:5px"></textarea>
+      <button onclick="injetarCrise()" style="width:100%;background:var(--red2);color:#fff;border:none;padding:7px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:2px;transition:background 0.15s" onmouseover="this.style.background='var(--red3)'" onmouseout="this.style.background='var(--red2)'">⚡ INJETAR CRISE AGORA</button>
+      <div id="criseStatus" style="font-size:9px;color:var(--green4);margin-top:5px;min-height:14px"></div>
+    </div>
+
     <div class="icard" style="margin-bottom:8px">
       <h3>Alertas</h3>
       <div id="alertList" style="font-size:9px;color:var(--muted);line-height:1.7">Aguardando dados dos delegados.</div>
@@ -253,7 +266,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 <!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, collection, onSnapshot, query, orderBy, limit, where } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getFirestore, collection, onSnapshot, query, orderBy, limit, where, doc, setDoc, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 const fb = initializeApp({
   apiKey:"AIzaSyCOMmKs-WXGbx-CseFBaD7ISB6HZjBoamk",
   authDomain:"barbarossa-mun.firebaseapp.com",
@@ -264,7 +277,7 @@ const fb = initializeApp({
 });
 const db = getFirestore(fb);
 window._db = db;
-window._fb = { collection, onSnapshot, query, orderBy, limit, where };
+window._fb = { collection, onSnapshot, query, orderBy, limit, where, doc, setDoc, addDoc, serverTimestamp };
 window._fbReady = true;
 </script>
 
@@ -453,6 +466,44 @@ function connectLive(){
 }
 
 // ── SEED DEMO ─────────────────────────────────────────────────────────
+function injetarCrise(){
+  if(!window._fbReady){ alert('Firebase não conectado. Clique em Monitorar ao Vivo primeiro.'); return; }
+  var num = document.getElementById('criseNum').value.trim() || '001';
+  var titulo = document.getElementById('criseTitulo').value.trim();
+  var texto = document.getElementById('criseTexto').value.trim();
+  var mission = document.getElementById('missionFilter').value.trim() || 'urano-geral';
+  if(!titulo || !texto){ alert('Preencha o título e a descrição da crise.'); return; }
+  var status = document.getElementById('criseStatus');
+  status.textContent = '⏳ Enviando...';
+  status.style.color = 'var(--gold)';
+  try {
+    var { addDoc, collection, serverTimestamp } = window._fb;
+    var db = window._db;
+    addDoc(collection(db, 'crises', mission, 'eventos'), {
+      numero: num,
+      titulo: titulo,
+      texto: texto,
+      missao: mission,
+      timestamp: serverTimestamp(),
+      tipo: 'crise'
+    }).then(function(){
+      status.textContent = '✅ Crise injetada! Aparecerá para todos os alunos.';
+      status.style.color = 'var(--green4)';
+      addFeed('CRISE','Professor','⚠️ Crise Nº '+num+' injetada: '+titulo,'alert');
+      // Incrementar número para próxima
+      var next = String(parseInt(num)+1).padStart(3,'0');
+      document.getElementById('criseNum').value = next;
+      setTimeout(function(){ status.textContent=''; }, 5000);
+    }).catch(function(e){
+      status.textContent = '❌ Erro: '+e.message;
+      status.style.color = 'var(--red3)';
+    });
+  } catch(e) {
+    status.textContent = '❌ Erro: '+e.message;
+    status.style.color = 'var(--red3)';
+  }
+}
+
 function seedDemo(){
   const mock=[
     {id:'zhukov',count:8,dir:3},{id:'vasilevsky',count:6,dir:2},{id:'shumilov',count:5,dir:2},
