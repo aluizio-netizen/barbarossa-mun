@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSÃO 6 - ESCOPO CORRIGIDO - 12/05/2025 -->
+<!-- VERSÃO 7 - MODELO CORRIGIDO - 13/05/2025 -->
 
 <html lang="pt-BR">
 <head>
@@ -779,7 +779,7 @@ async function callClaude(system, messages, max_tokens) {
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'anthropic-version': '2023-06-01', 'x-api-key': API_KEY, 'anthropic-dangerous-direct-browser-access': 'true' },
-    body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: max_tokens || 1000, system, messages })
+    body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: max_tokens || 1000, system, messages })
   });
   if (!r.ok) { const e = await r.text(); throw new Error('API ' + r.status + ': ' + e.substring(0, 100)); }
   const d = await r.json();
