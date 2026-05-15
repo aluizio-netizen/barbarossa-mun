@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -283,7 +284,8 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
       </optgroup>
     </select>
     <input type="text" id="studentNameInput" placeholder="Nome completo do oficial..."/>
-    <input type="text" id="studentCodeInput" placeholder="Código da missão (ex: urano-1942-A)..."/>
+    <input type="text" id="studentCodeInput" value="urano-geral" placeholder="Código da missão (informado pelo professor)..."/>
+    <div style="font-size:9px;color:var(--muted);margin:-4px 0 8px 2px;line-height:1.5">⚠️ Use o <b>mesmo código</b> informado pelo professor. Em dúvida, deixe <b>urano-geral</b>.</div>
     <button class="modal-btn" onclick="saveStudentName()">⚡ ENTRAR NO GABINETE</button>
     <div class="modal-note">Operação Urano · 19 de Novembro de 1942 · Internationali Negotia MUN</div>
   </div>
@@ -497,6 +499,10 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
             <button class="np-btn active" id="btnSovietPaper" onclick="selectPaper('soviet')">🇷🇺 Pravda</button>
           </div>
           <button class="np-generate-btn" id="npGenBtn" onclick="generateNewspaper()">⚡ GERAR EDIÇÃO — DIA <span id="npDayLabel">1</span></button>
+          <div id="npExportBtns" style="display:none;gap:6px;margin-top:6px">
+            <button class="pdf-btn" onclick="exportJornalPDF()">📄 Salvar PDF</button>
+            <button class="pdf-btn" onclick="printJornal()">🖨️ Imprimir</button>
+          </div>
         </div>
         <div class="newspaper-scroll" id="newspaperScroll">
           <div class="np-placeholder">
@@ -772,7 +778,14 @@ async function fbLog(tipo, dados) {
       nome: studentName, delegado_atual: cur, ultima_atividade: tipo,
       timestamp: serverTimestamp()
     }, { merge: true });
-  } catch(e) { console.warn('FB:', e.message); }
+    // Sinalizar sucesso visualmente
+    var badge = document.getElementById('fbBadge');
+    if (badge) badge.innerHTML = '<div class="fb-dot"></div><span>MONITORADO · ' + studentCode + '</span>';
+  } catch(e) {
+    console.warn('FB:', e.message);
+    var badge = document.getElementById('fbBadge');
+    if (badge) badge.innerHTML = '<div class="fb-dot" style="background:#d44040"></div><span style="color:#d44040">FALHA FB: ' + e.message.substring(0,40) + '</span>';
+  }
 }
 
 async function callClaude(system, messages, max_tokens) {
@@ -897,6 +910,62 @@ async function generateNewspaper(){
   const w=document.createElement('div');
   w.innerHTML='<div class="np-edition"><div class="np-header"><div class="np-header-top"><span>Nº '+(2000+curDay*3)+'</span><span>'+d.date.toUpperCase()+'</span><span>EDIÇÃO DE GUERRA</span></div><div class="np-masthead'+(isAxis?'':' soviet')+'">'+paperName.toUpperCase()+'</div><div class="np-subhead">'+(isAxis?'ÓRGÃO OFICIAL DO PARTIDO NACIONAL-SOCIALISTA':'ÓRGÃO OFICIAL DO PARTIDO COMUNISTA DA URSS — STALINGRADO 1942')+'</div><div class="np-dateline"><span>'+d.date.toUpperCase()+' · DIA '+d.day+'</span><span>'+(isAxis?'GRANDE REICH ALEMÃO':'U.R.S.S.')+'</span></div></div><div class="np-body"><div class="np-main-story"><div class="np-headline'+(isAxis?'':' soviet')+'">'+(np.manchete_principal||'')+'</div><div class="np-byline">Correspondente de guerra · '+d.date+'</div><div class="np-article">'+(np.artigo_principal||'').replace(/\n\n/g,'</p><p>')+'</div><div style="font-size:10px;font-style:italic;color:#555;margin-top:8px;font-family:Share Tech Mono,monospace">'+(np.subtitulo||'')+'</div></div><div class="np-side-story"><div class="np-side-headline'+(isAxis?'':' soviet')+'">'+(np.manchete_2||'')+'</div><div class="np-side-text">'+(np.noticia_2||'')+'</div></div><div class="np-side-story"><div class="np-side-headline'+(isAxis?'':' soviet')+'">'+(np.manchete_3||'')+'</div><div class="np-side-text">'+(np.noticia_3||'')+'</div><div style="margin-top:12px;padding-top:10px;border-top:1px solid #ccc"><div style="font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;color:#444">EDITORIAL</div><div class="np-side-text" style="font-style:italic">'+(np.editorial||'')+'</div></div></div><div class="np-propaganda'+(isAxis?'':' soviet')+'"><div class="np-propaganda-text">'+(np.propaganda||'')+'</div><div class="np-propaganda-sub">'+(np.propaganda_sub||'')+'</div></div></div><div class="np-footer"><span>'+paperName+' · EDIÇÃO DE GUERRA</span><span>Simulação educacional — Urano 1942</span><span>'+d.date+'</span></div></div>';
   scroll.appendChild(w);btn.disabled=false;
+  // Mostrar botões de exportação/impressão
+  var exportBtns=document.getElementById('npExportBtns');
+  if(exportBtns){exportBtns.style.display='flex';}
+}
+
+// ── EXPORTAR JORNAL EM PDF (captura visual) ───────────────────────────
+async function exportJornalPDF(){
+  var edition=document.querySelector('#newspaperScroll .np-edition');
+  if(!edition){alert('Gere uma edição primeiro.');return;}
+  if(typeof html2canvas==='undefined'){alert('Biblioteca html2canvas não carregou. Verifique sua conexão.');return;}
+  var btns=document.querySelectorAll('#npExportBtns button');btns.forEach(function(b){b.disabled=true;});
+  try{
+    var canvas=await html2canvas(edition,{scale:2,backgroundColor:'#f5f1e6',useCORS:true,logging:false});
+    var imgData=canvas.toDataURL('image/jpeg',0.92);
+    var {jsPDF}=window.jspdf;
+    var pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    var pdfW=210,pdfH=297;
+    var imgW=pdfW-10;
+    var imgH=(canvas.height*imgW)/canvas.width;
+    // Se a imagem couber numa página
+    if(imgH<=pdfH-10){
+      pdf.addImage(imgData,'JPEG',5,5,imgW,imgH);
+    }else{
+      // Distribuir por páginas (corta e adiciona páginas)
+      var pageH=pdfH-10;
+      var totalPages=Math.ceil(imgH/pageH);
+      for(var i=0;i<totalPages;i++){
+        if(i>0)pdf.addPage();
+        var sliceY=-(i*pageH);
+        pdf.addImage(imgData,'JPEG',5,5+sliceY,imgW,imgH);
+      }
+    }
+    var paperFile=(lastNewspaper&&lastNewspaper.paper||'Jornal').replace(/\s+/g,'_');
+    var dayFile=(lastNewspaper&&lastNewspaper.day&&lastNewspaper.day.date||'edicao').replace(/[^a-zA-Z0-9]/g,'_');
+    pdf.save(paperFile+'_'+dayFile+'.pdf');
+    fbLog('exportar_jornal_pdf',{veiculo:paperFile,dia:lastNewspaper&&lastNewspaper.day&&lastNewspaper.day.day});
+  }catch(e){alert('Erro ao gerar PDF: '+e.message);}
+  btns.forEach(function(b){b.disabled=false;});
+}
+
+// ── IMPRIMIR JORNAL ────────────────────────────────────────────────────
+function printJornal(){
+  var edition=document.querySelector('#newspaperScroll .np-edition');
+  if(!edition){alert('Gere uma edição primeiro.');return;}
+  var html=edition.outerHTML;
+  // Coletar CSS relevante do documento
+  var styles='';
+  Array.from(document.styleSheets).forEach(function(ss){
+    try{Array.from(ss.cssRules).forEach(function(r){if(r.cssText.indexOf('np-')!==-1||r.cssText.indexOf('newspaper')!==-1)styles+=r.cssText+'\n';});}
+    catch(e){/* ignora cross-origin */}
+  });
+  var w=window.open('','_blank','width=900,height=1200');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+(lastNewspaper&&lastNewspaper.paper||'Jornal')+' — '+(lastNewspaper&&lastNewspaper.day&&lastNewspaper.day.date||'')+'</title><style>body{margin:0;padding:20px;background:#fff;font-family:Georgia,serif}@media print{body{padding:0}}'+styles+'</style></head><body>'+html+'</body></html>');
+  w.document.close();
+  setTimeout(function(){w.focus();w.print();},800);
+  fbLog('imprimir_jornal',{veiculo:lastNewspaper&&lastNewspaper.paper,dia:lastNewspaper&&lastNewspaper.day&&lastNewspaper.day.day});
 }
 
 
@@ -1579,7 +1648,7 @@ var _origSave = typeof saveStudentName !== 'undefined' ? saveStudentName : null;
 window.addEventListener('load', function(){
   // Tentar iniciar listener periodicamente até studentCode estar disponível
   var interval = setInterval(function(){
-    if(studentCode && studentCode !== 'urano-geral'){
+    if(studentCode && window._fbReady){
       startCriseListener();
       clearInterval(interval);
     }
