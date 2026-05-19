@@ -1123,7 +1123,10 @@ function runAnim(){if(!animPlaying)return;const total=TOTAL_STEPS*(GEO_FRONTS.le
 
 // ── JORNAL ────────────────────────────────────────────────────────────
 function selectPaper(side){currentPaper=side;document.getElementById('btnAxisPaper').classList.toggle('active',side==='axis');document.getElementById('btnSovietPaper').classList.toggle('active',side==='soviet');}
-function updateNpDayLabel(){document.getElementById('npDayLabel').textContent=DAYS[curDay].day;}
+function updateNpDayLabel(){
+  var el = document.getElementById('npDayLabelHist');
+  if(el) el.textContent = DAYS[curDay].day;
+}
 
 async function generateNewspaper(useHistoric){
   const btn=document.getElementById('npGenBtn');
