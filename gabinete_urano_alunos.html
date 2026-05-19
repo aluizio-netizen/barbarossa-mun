@@ -1867,6 +1867,13 @@ function startCriseListener(){
 }
 
 function exibirCrise(data, criseId){
+  // Filtra por destinatário: só exibe se for pra turma ou pra mim
+  var selfId = localStorage.getItem('urano_self_id') || '';
+  var dest = data.destinatario || 'turma';
+  if(dest !== 'turma' && dest !== selfId){
+    console.log('[Crise] Ignorada — nao destinada a este oficial. dest=' + dest + ' meu_id=' + selfId);
+    return;
+  }
   var num = data.numero || '001';
   var texto = data.texto || 'Situação crítica detectada. Aguarde instruções do secretariado.';
   var titulo = data.titulo || 'NOVA CRISE';
