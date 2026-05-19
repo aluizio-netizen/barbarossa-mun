@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>STAVKA — Painel do Professor | Gabinete de Guerra: Urano 1942</title>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060a04;--surface:#0d1209;--surface2:#12180c;--surface3:#171f10;
+  --border:#243018;--border2:#364824;--border3:#4a6430;
+  --gold:#c8a84a;--gold2:#e6c96a;
+  --red:#8b1515;--red2:#b02020;--red3:#d44040;
+  --green:#1a4010;--green2:#2a6018;--green3:#3a8a22;--green4:#52b030;
+  --soviet:#c84040;
+  --text:#cce0b0;--text2:#a0c080;--muted:#688050;--dim:#344020;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;overflow:hidden}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.06) 3px,rgba(0,0,0,0.06) 6px);pointer-events:none;z-index:9998}
+
+/* ── HEADER ── */
+.hdr{display:flex;align-items:center;gap:12px;padding:9px 16px;background:var(--surface);border-bottom:2px solid var(--border2);flex-shrink:0;z-index:10;position:relative}
+.hdr-star{font-size:20px;color:var(--soviet);text-shadow:0 0 10px rgba(200,64,64,0.4);flex-shrink:0}
+.hdr-left{display:flex;flex-direction:column;gap:1px}
+.hdr-sub{font-size:8px;color:var(--muted);letter-spacing:3px;text-transform:uppercase}
+.hdr-title{font-family:'Special Elite',serif;font-size:14px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.hdr-clock{font-size:13px;color:var(--gold);letter-spacing:2px;font-variant-numeric:tabular-nums}
+.live-badge{background:rgba(200,64,64,0.15);border:1px solid var(--red2);color:var(--soviet);font-size:8px;padding:2px 8px;letter-spacing:3px;animation:blink 2.5s step-end infinite}
+@keyframes blink{0%,100%{opacity:1}60%{opacity:0.5}}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--green4);box-shadow:0 0 8px var(--green4);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* ── LAYOUT ── */
+.app{display:flex;height:calc(100vh - 48px);overflow:hidden}
+.left{width:270px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;background:var(--surface)}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.right{width:240px;flex-shrink:0;border-left:1px solid var(--border);overflow-y:auto;background:var(--surface)}
+
+.ptitle{font-size:8px;color:var(--gold);letter-spacing:3px;padding:7px 11px;border-bottom:1px solid var(--border);text-transform:uppercase;background:var(--surface2);position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:5px;flex-shrink:0}
+.ptitle::before{content:'//';color:var(--dim)}
+
+/* ── TABS ── */
+.tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface2)}
+.tab{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:inherit;font-size:9px;padding:9px 14px;cursor:pointer;letter-spacing:2px;text-transform:uppercase;transition:all 0.15s}
+.tab:hover{color:var(--text)}.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.tabpanel{display:none;flex:1;flex-direction:column;overflow:hidden}.tabpanel.active{display:flex}
+
+/* ── DELEGATE LIST ── */
+.dlist-wrap{overflow-y:auto;flex:1;padding:6px}
+.faction-div{font-size:7px;color:var(--dim);letter-spacing:3px;padding:5px 7px 3px;text-transform:uppercase;border-bottom:1px solid rgba(36,48,24,0.5);margin-bottom:3px}
+
+.dcard{background:transparent;border:1px solid var(--border);border-radius:2px;padding:7px 9px;margin-bottom:3px;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden}
+.dcard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--green3);transform:scaleY(0);transition:transform 0.15s;transform-origin:bottom}
+.dcard:hover{border-color:var(--border3);background:var(--surface2)}.dcard:hover::before{transform:scaleY(1)}
+.dcard.sel{border-color:var(--green4);background:var(--surface2)}.dcard.sel::before{transform:scaleY(1)}
+.dcard.featured{border-color:#5a4010}.dcard.featured::before{background:var(--gold)}
+.dcard.featured.sel{border-color:var(--gold)}
+.dcard.has-activity::after{content:'';position:absolute;right:7px;top:50%;transform:translateY(-50%);width:5px;height:5px;border-radius:50%;background:var(--green4);box-shadow:0 0 5px var(--green4)}
+.dc-name{font-size:10px;color:var(--text);font-weight:600}
+.dc-student{font-size:8px;color:var(--muted);margin-top:1px}
+.dc-role{font-size:8px;color:var(--dim);margin-top:1px}
+.dc-stats{display:flex;gap:5px;margin-top:4px}
+.dc-stat{font-size:8px;color:var(--muted);background:rgba(36,48,24,0.4);border:1px solid var(--border);padding:1px 5px}
+.dc-stat.hi{color:var(--green4);border-color:var(--green2)}
+
+/* ── OVERVIEW GRID ── */
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:8px;flex-shrink:0;border-bottom:1px solid var(--border)}
+.stat-box{background:var(--surface2);border:1px solid var(--border);padding:10px 8px;text-align:center;position:relative}
+.stat-box::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
+.stat-box.g::after{background:var(--green4)}.stat-box.a::after{background:var(--gold)}.stat-box.r::after{background:var(--red3)}.stat-box.b::after{background:#6070cc}
+.stat-num{font-size:24px;font-family:'Special Elite',serif;line-height:1}
+.stat-num.g{color:var(--green4)}.stat-num.a{color:var(--gold)}.stat-num.r{color:var(--red3)}.stat-num.b{color:#8090dd}
+.stat-lbl{font-size:8px;color:var(--muted);letter-spacing:1px;margin-top:3px;text-transform:uppercase}
+
+.grid-overview{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:4px;padding:8px;overflow-y:auto;flex:1;align-content:start}
+.gc{background:var(--surface2);border:1px solid var(--border);padding:7px 8px;cursor:pointer;transition:all 0.15s;position:relative}
+.gc:hover{border-color:var(--border3);background:var(--surface3)}
+.gc.active{border-color:var(--green4)}
+.gc.active::before{content:'';position:absolute;top:4px;right:4px;width:5px;height:5px;border-radius:50%;background:var(--green4);box-shadow:0 0 5px var(--green4)}
+.gc.featured{border-color:#5a4010}
+.gc-name{font-size:9px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gc-gen{font-size:8px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gc-msgs{font-size:11px;font-weight:700;color:var(--green4)}
+.gc-bar{margin-top:4px;height:2px;background:var(--border);overflow:hidden}
+.gc-bar-fill{height:100%;background:var(--green3);transition:width 1s}
+
+/* ── FEED ── */
+.feed{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:5px}
+.feed-item{border-left:2px solid var(--border2);padding:6px 10px;background:var(--surface2);font-size:10px;line-height:1.5;animation:fadeIn 0.3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+.feed-item.dir{border-left-color:var(--gold)}.feed-item.alert{border-left-color:var(--red3)}
+.feed-meta{font-size:8px;color:var(--muted);margin-bottom:2px;display:flex;gap:8px}
+.feed-time{color:var(--dim)}.feed-who{color:var(--green3)}.feed-type{color:var(--gold);letter-spacing:1px}
+.feed-text{color:var(--text2)}
+
+/* ── DETAIL ── */
+.detail-wrap{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+.no-sel{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--dim);font-size:11px;letter-spacing:2px}
+.no-sel::before{content:'☭';font-size:36px;opacity:0.2}
+.det-hdr{background:var(--surface2);border:1px solid var(--border2);padding:12px;display:flex;gap:12px}
+.det-icon{width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--surface3);border:1px solid var(--border2);flex-shrink:0}
+.det-info{flex:1}
+.det-general{font-family:'Special Elite',serif;font-size:14px;color:var(--gold)}
+.det-student{font-size:10px;color:var(--muted);margin-top:2px}
+.det-role{font-size:9px;color:var(--green3);letter-spacing:1px;margin-top:3px;text-transform:uppercase}
+
+/* ── INTEL ── */
+.icard{background:var(--surface2);border:1px solid var(--border);padding:9px;margin:6px 8px 0}
+.icard h3{font-size:8px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;display:flex;align-items:center;gap:5px}
+.icard h3::after{content:'';flex:1;height:1px;background:var(--border)}
+.irow{display:flex;justify-content:space-between;align-items:center;font-size:9px;padding:3px 0;border-bottom:1px solid rgba(36,48,24,0.4)}.irow:last-child{border-bottom:none}
+.ival{color:var(--muted)}.ival.g{color:var(--green4)}.ival.r{color:var(--red3)}.ival.a{color:var(--gold)}
+
+/* ── PROG BAR ── */
+.prog-wrap{margin-top:4px}.prog-lbl{font-size:8px;color:var(--muted);letter-spacing:2px;margin-bottom:4px;text-transform:uppercase;display:flex;justify-content:space-between}
+.prog-bg{background:#0a0e06;border:1px solid var(--border);height:10px;overflow:hidden}
+.prog-fill{height:100%;background:var(--green3);transition:width 1s ease}
+
+/* ── FIREBASE CONFIG ── */
+.fb-config{padding:8px;margin:6px 8px 0;background:var(--surface2);border:1px solid var(--border)}
+.fb-config label{font-size:8px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;display:block;margin-bottom:5px}
+.fb-config input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:10px;padding:6px 8px;outline:none;margin-bottom:5px}
+.fb-config input:focus{border-color:var(--gold)}
+.fb-config button{width:100%;background:var(--green3);color:#060800;border:none;padding:6px;font-family:inherit;font-size:9px;font-weight:700;cursor:pointer;letter-spacing:2px;transition:background 0.15s}
+.fb-config button:hover{background:var(--green4)}
+
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2)}
+@media(max-width:900px){.right{display:none}}
+@media(max-width:600px){.left{width:180px}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-star">☭</div>
+  <div class="hdr-left">
+    <div class="hdr-sub">Internationali Negotia · MUN · Painel de Monitoramento</div>
+    <div class="hdr-title">STAVKA — Gabinete de Guerra: Operação Urano 1942</div>
+  </div>
+  <div class="hdr-right">
+    <div class="live-badge">⚡ AO VIVO</div>
+    <div style="text-align:right">
+      <div class="hdr-clock" id="clock">--:--:--</div>
+      <div style="font-size:8px;color:var(--dim);margin-top:1px">26 DELEGADOS MONITORADOS</div>
+    </div>
+    <div class="status-dot"></div>
+  </div>
+</div>
+
+<div class="app">
+
+  <!-- LEFT: LIST -->
+  <div class="left">
+    <div class="ptitle">Oficiais — Exército Vermelho</div>
+    <div class="dlist-wrap" id="delegateList"></div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('overview')">📊 VISÃO GERAL</button>
+      <button class="tab" onclick="switchTab('feed')">📡 ATIVIDADE AO VIVO</button>
+      <button class="tab" onclick="switchTab('detail')">🎖️ DETALHE OFICIAL</button>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div class="tabpanel active" id="tab-overview">
+      <div class="stats-bar">
+        <div class="stat-box g"><div class="stat-num g" id="sOnline">0</div><div class="stat-lbl">Ativos Agora</div></div>
+        <div class="stat-box a"><div class="stat-num a" id="sMessages">0</div><div class="stat-lbl">Mensagens</div></div>
+        <div class="stat-box b"><div class="stat-num b" id="sDirectives">0</div><div class="stat-lbl">Diretivas</div></div>
+        <div class="stat-box r"><div class="stat-num r" id="sInactive">26</div><div class="stat-lbl">Sem Atividade</div></div>
+      </div>
+      <div style="padding:5px 8px 3px;font-size:8px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;border-bottom:1px solid var(--border);flex-shrink:0">// TODOS OS 26 DELEGADOS</div>
+      <div class="grid-overview" id="gridOverview"></div>
+    </div>
+
+    <!-- FEED -->
+    <div class="tabpanel" id="tab-feed">
+      <div class="feed" id="feedLog">
+        <div class="feed-item"><div class="feed-meta"><span class="feed-time">--:--</span><span class="feed-type">SISTEMA</span></div><div class="feed-text">⚡ Painel de monitoramento inicializado. Aguardando conexão dos delegados com o Firebase.</div></div>
+      </div>
+    </div>
+
+    <!-- DETAIL -->
+    <div class="tabpanel" id="tab-detail">
+      <div class="detail-wrap" id="detailWrap">
+        <div class="no-sel">Selecione um oficial na lista à esquerda para ver detalhes</div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+
+  <!-- RIGHT: INTEL -->
+  <div class="right">
+    <div class="ptitle">Inteligência</div>
+
+    <div class="icard">
+      <h3>Situação — 19 Nov 1942</h3>
+      <div class="irow"><span>Operação Urano</span><span class="ival g">Iniciada</span></div>
+      <div class="irow"><span>6° Exército Eixo</span><span class="ival r">A Cercar</span></div>
+      <div class="irow"><span>Frente Stalingrado</span><span class="ival g">Avança Sul</span></div>
+      <div class="irow"><span>Frente Sudoeste</span><span class="ival g">Avança Norte</span></div>
+      <div class="irow"><span>Temperatura</span><span class="ival r">-15°C</span></div>
+    </div>
+
+    <div class="icard">
+      <h3>Representações Destaque</h3>
+      <div style="background:rgba(200,168,74,0.06);border:1px solid #5a4010;padding:8px;margin-bottom:6px">
+        <div style="font-size:9px;color:var(--gold);margin-bottom:3px">★ Gen. Mikhail Shumilov</div>
+        <div style="font-size:8px;color:var(--muted)">64° Exército — Flanco Sul</div>
+        <div style="font-size:8px;color:var(--dim);margin-top:2px">Analu S. A. de Almeida</div>
+        <div style="font-size:8px;color:var(--green3);margin-top:3px" id="statShumilov">Aguardando...</div>
+      </div>
+      <div style="background:rgba(200,168,74,0.06);border:1px solid #5a4010;padding:8px">
+        <div style="font-size:9px;color:var(--gold);margin-bottom:3px">★ Gen. Semyon Mikhailov</div>
+        <div style="font-size:8px;color:var(--muted)">Apoio Logístico</div>
+        <div style="font-size:8px;color:var(--dim);margin-top:2px">Cecília Neves</div>
+        <div style="font-size:8px;color:var(--green3);margin-top:3px" id="statMikhailov">Aguardando...</div>
+      </div>
+    </div>
+
+    <div class="icard">
+      <h3>Progresso do Gabinete</h3>
+      <div class="prog-wrap">
+        <div class="prog-lbl"><span>Participação</span><span id="progPct">0%</span></div>
+        <div class="prog-bg"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+      </div>
+      <div style="margin-top:8px">
+        <div class="irow"><span>Total Delegados</span><span class="ival">26</span></div>
+        <div class="irow"><span>Com Atividade</span><span class="ival g" id="sActive">0</span></div>
+        <div class="irow"><span>Sem Atividade</span><span class="ival r" id="sInactive2">26</span></div>
+        <div class="irow"><span>Diretivas Geradas</span><span class="ival a" id="sDir2">0</span></div>
+      </div>
+    </div>
+
+    <div class="fb-config">
+      <label>Conectar ao Firebase</label>
+      <input type="text" id="missionFilter" placeholder="Filtrar por código de missão..." />
+      <button onclick="connectLive()">⚡ MONITORAR AO VIVO</button>
+    </div>
+
+    <div class="icard" style="margin:6px 8px 0;background:rgba(139,26,26,0.12);border:1px solid var(--red2)">
+      <h3 style="color:var(--red3)">Injetar Crise</h3>
+      <div style="font-size:9px;color:var(--muted);margin-bottom:8px;line-height:1.6">Envie uma situação-problema aos delegados em tempo real. O modal de crise aparecerá na tela de todos os alunos conectados.</div>
+      <label style="font-size:8px;color:var(--red3);letter-spacing:2px;display:block;margin-bottom:4px;text-transform:uppercase">Nº da Crise</label>
+      <input type="text" id="criseNum" placeholder="Ex: 001" value="001" style="width:100%;background:var(--bg);border:1px solid var(--red2);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 8px;outline:none;margin-bottom:5px"/>
+      <label style="font-size:8px;color:var(--red3);letter-spacing:2px;display:block;margin-bottom:4px;text-transform:uppercase">Título</label>
+      <input type="text" id="criseTitulo" placeholder="Ex: Contraataque Alemão no Flanco Sul" style="width:100%;background:var(--bg);border:1px solid var(--red2);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 8px;outline:none;margin-bottom:5px"/>
+      <label style="font-size:8px;color:var(--red3);letter-spacing:2px;display:block;margin-bottom:4px;text-transform:uppercase">Descrição da Crise</label>
+      <textarea id="criseTexto" rows="4" placeholder="Descreva a situação-problema que os delegados devem resolver..." style="width:100%;background:var(--bg);border:1px solid var(--red2);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 8px;outline:none;resize:vertical;margin-bottom:5px"></textarea>
+      <button onclick="injetarCrise()" style="width:100%;background:var(--red2);color:#fff;border:none;padding:7px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:2px;transition:background 0.15s" onmouseover="this.style.background='var(--red3)'" onmouseout="this.style.background='var(--red2)'">⚡ INJETAR CRISE AGORA</button>
+      <div id="criseStatus" style="font-size:9px;color:var(--green4);margin-top:5px;min-height:14px"></div>
+    </div>
+
+    <div class="icard" style="margin-bottom:8px">
+      <h3>Alertas</h3>
+      <div id="alertList" style="font-size:9px;color:var(--muted);line-height:1.7">Aguardando dados dos delegados.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, onSnapshot, query, orderBy, limit, where, doc, setDoc, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+const fb = initializeApp({
+  apiKey:"AIzaSyCOMmKs-WXGbx-CseFBaD7ISB6HZjBoamk",
+  authDomain:"barbarossa-mun.firebaseapp.com",
+  projectId:"barbarossa-mun",
+  storageBucket:"barbarossa-mun.firebasestorage.app",
+  messagingSenderId:"202509883011",
+  appId:"1:202509883011:web:ca0183d935366231b3adb6"
+});
+const db = getFirestore(fb);
+window._db = db;
+window._fb = { collection, onSnapshot, query, orderBy, limit, where, doc, setDoc, addDoc, serverTimestamp };
+window._fbReady = true;
+</script>
+
+<script>
+// ── TODOS OS 26 DELEGADOS ────────────────────────────────────────────
+const DELEGATES = [
+  {id:'shumilov',    general:'Mikhail Shumilov',    student:'Analu S. A. de Almeida',       role:'Cmd. 64° Exército',                  featured:true},
+  {id:'mikhailov',   general:'Semyon Mikhailov',    student:'Cecília Neves',                 role:'Apoio Logístico',                    featured:true},
+  {id:'yeremenko',   general:'Andrei Yeremenko',    student:'Letícia Trinta Santos',         role:'Cmd. Frente de Stalingrado',         featured:false},
+  {id:'popov',       general:'Victor I. Popov',     student:'Abrahim Boulhosa',              role:'Cmd. Forças de Comunicação',         featured:false},
+  {id:'lelyushenko', general:'Dmitry Lelyushenko',  student:'Rian Bocchio da Fontoura',      role:'Cmd. 51° Exército',                  featured:false},
+  {id:'zhukov',      general:'Georgy Zhukov',       student:'Leonardo B. Micucci Xavier',    role:'Vice-Cmd. Supremo Ex. Vermelho',     featured:false},
+  {id:'shalnev',     general:'A. F. Shalnev',       student:'Alexia Lopes Lima de Bruyne',   role:'Cmd. Divisões de Fuzileiros',        featured:false},
+  {id:'khrushchev',  general:'Nikita Khrushchev',   student:'Maria Siqueira B. A. da Silva', role:'Comissário Político Fr. Stalingrado', featured:false},
+  {id:'burov',       general:'Matvey Burov',        student:'Artur Longo Noronha',           role:'Cmd. Brigadas Mecanizadas',          featured:false},
+  {id:'rybalko',     general:'Pavel Rybalko',       student:'Miguel Isoppo A. Gonçalves',    role:'Cmd. 3ª Div. Tanques da Guarda',     featured:false},
+  {id:'govorov',     general:'Leonid Govorov',      student:'João Correia S. Rodrigues',     role:'Cmd. Forças de Artilharia',          featured:false},
+  {id:'konev',       general:'Ivan Konev',          student:'Rodrigo César Lavôr de Souza',  role:'Cmd. 2ª Frente Ucraniana',           featured:false},
+  {id:'shtemenko',   general:'Sergei Shtemenko',    student:'Maria Clara Cortez Bastos',     role:'Chefe EM Frente de Stalingrado',     featured:false},
+  {id:'ivanov',      general:'Vasily I. Ivanov',    student:'Clarice Generoso de P. Barroso',role:'Cmd. Unidades de Artilharia',        featured:false},
+  {id:'budyonny',    general:'Semyon Budyonny',     student:'Davi de Oliveira Barbosa',      role:'Cmd. Unidades de Cavalaria',         featured:false},
+  {id:'ponomarenko', general:'A. Ponomarenko',      student:'Livia Leite Athayde',           role:'Cmd. Forças Aéreas',                 featured:false},
+  {id:'antonov',     general:'Alexei Antonov',      student:'Henrique Coelho Teixeira',      role:'Chefe de Operações do EM',           featured:false},
+  {id:'shcherbakov_l',general:'Leonid Shcherbakov', student:'Cecília C. de Miranda Maia',    role:'Cmd. Unidades de Reconhecimento',    featured:false},
+  {id:'shcherbakov_v',general:'Vladimir Shcherbakov',student:'Gabriela Botelho Leão',        role:'Cmd. Unidades de Artilharia',        featured:false},
+  {id:'tchernik',    general:'Fedor Tchernik',      student:'Liv dos Santos Penin',          role:'Cmd. 12° Exército',                  featured:false},
+  {id:'shcherbakov_a',general:'A.S. Shcherbakov',  student:'Rafaella Mourão Gonçalves',     role:'Cmd. Unidades de Engenharia',        featured:false},
+  {id:'vasilevsky',  general:'Alexander Vasilevsky',student:'Roberto Tomaz M. Pinheiro',     role:'Chefe do Estado-Maior',              featured:false},
+  {id:'vatutin',     general:'Nikolai Vatutin',     student:'Rafael Boullosa Bonna',         role:'Cmd. 1ª Frente Ucraniana',           featured:false},
+  {id:'kirponos',    general:'Mikhail Kirponos',    student:'Júlia da Silva Fonseca',        role:'Cmd. 40° Exército',                  featured:false},
+  {id:'chuikov',     general:'Vasily Chuikov',      student:'Bernardo Pérez B. Proença',     role:'Cmd. 62° Exército',                  featured:false},
+  {id:'fedorov',     general:'Ivan I. Fedorov',     student:'Enzo Rafael Brasil C. Malaquias',role:'Cmd. Forças de Artilharia',         featured:false},
+];
+
+const state = { activities:{}, selected:null, totalMessages:0, totalDirectives:0, online:new Set() };
+
+// ── RELÓGIO ──────────────────────────────────────────────────────────
+setInterval(()=>{
+  const n=new Date(),p=x=>String(x).padStart(2,'0');
+  document.getElementById('clock').textContent=p(n.getHours())+':'+p(n.getMinutes())+':'+p(n.getSeconds());
+},1000);
+
+// ── TABS ──────────────────────────────────────────────────────────────
+function switchTab(t){
+  ['overview','feed','detail'].forEach((id,i)=>{
+    document.querySelectorAll('.tab')[i].classList.toggle('active',id===t);
+    document.getElementById('tab-'+id).classList.toggle('active',id===t);
+  });
+}
+
+// ── RENDER LISTA ──────────────────────────────────────────────────────
+function renderList(){
+  const el=document.getElementById('delegateList');
+  el.innerHTML='<div class="faction-div">★ Representações Destaque</div>';
+  const featured=DELEGATES.filter(d=>d.featured);
+  const rest=DELEGATES.filter(d=>!d.featured);
+  [...featured,...[{_divider:'— Todos os Oficiais —'}],...rest].forEach(d=>{
+    if(d._divider){el.innerHTML+='<div class="faction-div">'+d._divider+'</div>';return;}
+    const act=state.activities[d.id]||{};
+    const hasAct=(act.count||0)>0;
+    const div=document.createElement('div');
+    div.className='dcard'+(d.featured?' featured':'')+(state.selected===d.id?' sel':'')+(hasAct?' has-activity':'');
+    div.innerHTML=`<div class="dc-name">🇷🇺 ${d.general.split(' ').slice(-1)[0]}</div><div class="dc-student">${d.student}</div><div class="dc-role">${d.role}</div><div class="dc-stats"><span class="dc-stat ${hasAct?'hi':''}">💬${act.count||0}</span><span class="dc-stat">${act.directives||0}dir</span></div>`;
+    div.onclick=()=>selectDelegate(d.id);
+    el.appendChild(div);
+  });
+}
+
+// ── RENDER GRID ───────────────────────────────────────────────────────
+function renderGrid(){
+  const el=document.getElementById('gridOverview');
+  el.innerHTML='';
+  DELEGATES.forEach(d=>{
+    const act=state.activities[d.id]||{};
+    const hasAct=(act.count||0)>0;
+    const div=document.createElement('div');
+    div.className='gc'+(hasAct?' active':'')+(d.featured?' featured':'');
+    const pct=Math.min(100,(act.count||0)*10);
+    div.innerHTML=`<div class="gc-name">${d.student.split(' ').slice(0,2).join(' ')}</div><div class="gc-gen">${d.general.split(' ').slice(-1)[0]} · ${d.role.split(' ').slice(0,2).join(' ')}</div><div style="margin-top:4px"><span class="gc-msgs">${act.count||0}</span><span style="font-size:8px;color:var(--dim)"> msgs · ${act.directives||0}dir</span></div><div class="gc-bar"><div class="gc-bar-fill" style="width:${pct}%"></div></div>`;
+    div.onclick=()=>{selectDelegate(d.id);switchTab('detail');};
+    el.appendChild(div);
+  });
+}
+
+// ── UPDATE STATS ──────────────────────────────────────────────────────
+function updateStats(){
+  const active=Object.values(state.activities).filter(a=>(a.count||0)>0).length;
+  const inactive=DELEGATES.length-active;
+  document.getElementById('sOnline').textContent=state.online.size;
+  document.getElementById('sMessages').textContent=state.totalMessages;
+  document.getElementById('sDirectives').textContent=state.totalDirectives;
+  document.getElementById('sInactive').textContent=inactive;
+  document.getElementById('sActive').textContent=active;
+  document.getElementById('sInactive2').textContent=inactive;
+  document.getElementById('sDir2').textContent=state.totalDirectives;
+  const pct=Math.round(active/DELEGATES.length*100);
+  document.getElementById('progPct').textContent=pct+'%';
+  document.getElementById('progFill').style.width=pct+'%';
+  // Destaque
+  const sh=state.activities['shumilov']||{};
+  const mk=state.activities['mikhailov']||{};
+  document.getElementById('statShumilov').textContent=`${sh.count||0} msgs · ${sh.directives||0} dir. · ${sh.lastTime||'—'}`;
+  document.getElementById('statMikhailov').textContent=`${mk.count||0} msgs · ${mk.directives||0} dir. · ${mk.lastTime||'—'}`;
+  // Alertas
+  const alerts=[];
+  if(inactive>20)alerts.push(`⚠️ ${inactive} delegados sem atividade registrada.`);
+  if(!(state.activities['shumilov']?.count))alerts.push('⚠️ Shumilov (Analu) ainda não interagiu.');
+  if(!(state.activities['mikhailov']?.count))alerts.push('⚠️ Mikhailov (Cecília) ainda não interagiu.');
+  document.getElementById('alertList').innerHTML=alerts.length?alerts.map(a=>`<div style="color:var(--red3);margin-bottom:4px">${a}</div>`).join(''):'✅ Nenhum alerta no momento.';
+  renderList();renderGrid();
+}
+
+// ── SELECT DELEGATE ───────────────────────────────────────────────────
+function selectDelegate(id){
+  state.selected=id;
+  const d=DELEGATES.find(x=>x.id===id);
+  const act=state.activities[id]||{};
+  const wrap=document.getElementById('detailWrap');
+  const hist=(act.history||[]).slice(-8).reverse();
+  wrap.innerHTML=`
+    <div class="det-hdr">
+      <div class="det-icon">🇷🇺</div>
+      <div class="det-info">
+        <div class="det-general">${d.general}</div>
+        <div class="det-student">Delegado(a): ${d.student}</div>
+        <div class="det-role">${d.role}${d.featured?' · ★ DESTAQUE':''}</div>
+      </div>
+    </div>
+    <div class="icard" style="margin:0">
+      <h3>Estatísticas</h3>
+      <div class="irow"><span>Mensagens</span><span class="ival g">${act.count||0}</span></div>
+      <div class="irow"><span>Diretivas</span><span class="ival g">${act.directives||0}</span></div>
+      <div class="irow"><span>Última Atividade</span><span class="ival a">${act.lastTime||'—'}</span></div>
+      <div class="irow"><span>Status</span><span class="ival ${state.online.has(id)?'g':'r'}">${state.online.has(id)?'ONLINE':'OFFLINE'}</span></div>
+    </div>
+    <div style="font-size:8px;color:var(--gold);letter-spacing:3px;padding:8px 0 4px;text-transform:uppercase">// HISTÓRICO RECENTE</div>
+    ${hist.length===0?'<div style="font-size:10px;color:var(--dim);padding:8px">Nenhuma atividade registrada.</div>':hist.map(h=>`<div style="background:var(--surface2);border:1px solid var(--border);padding:7px 9px;margin-bottom:3px;font-size:10px;color:var(--text2)"><div style="font-size:8px;color:var(--dim);margin-bottom:2px">${h.time||''} · ${h.tipo||''}</div>${h.texto||''}</div>`).join('')}`;
+  renderList();
+}
+
+// ── FEED ──────────────────────────────────────────────────────────────
+function addFeed(tipo,who,text,cls=''){
+  const n=new Date(),p=x=>String(x).padStart(2,'0');
+  const t=p(n.getHours())+':'+p(n.getMinutes());
+  const el=document.getElementById('feedLog');
+  const div=document.createElement('div');
+  div.className='feed-item '+cls;
+  div.innerHTML=`<div class="feed-meta"><span class="feed-time">${t}</span><span class="feed-who">${who}</span><span class="feed-type">${tipo}</span></div><div class="feed-text">${text}</div>`;
+  el.insertBefore(div,el.firstChild);
+  while(el.children.length>150)el.removeChild(el.lastChild);
+}
+
+// ── FIREBASE LIVE ─────────────────────────────────────────────────────
+function connectLive(){
+  if(!window._fbReady){setTimeout(connectLive,500);return;}
+  const mission=document.getElementById('missionFilter').value.trim()||'urano-geral';
+  addFeed('SISTEMA','Professor','🔗 Conectando ao Firebase · Missão: '+mission);
+  const {collection,onSnapshot,query,orderBy,limit}=window._fb;
+  const db=window._db;
+  try{
+    const q=query(collection(db,'missoes',mission,'atividades'),orderBy('timestamp','desc'),limit(100));
+    onSnapshot(q,snap=>{
+      snap.docChanges().forEach(change=>{
+        if(change.type!=='added')return;
+        const data=change.doc.data();
+        const delegId=data.delegado||'';
+        const nome=data.oficial||'?';
+        const tipo=data.tipo||'';
+        const texto=data.texto||data.assunto||'';
+        // Atualiza estado
+        if(!state.activities[delegId])state.activities[delegId]={count:0,directives:0,history:[]};
+        const act=state.activities[delegId];
+        if(tipo==='mensagem'){act.count++;state.totalMessages++;}
+        if(tipo==='diretiva'){act.directives++;state.totalDirectives++;}
+        act.lastTime=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+        act.history.push({time:act.lastTime,tipo,texto:texto.substring(0,100)});
+        state.online.add(delegId);
+        // Feed
+        const cls=tipo==='diretiva'?'dir':'';
+        addFeed(tipo.toUpperCase(),nome,texto.substring(0,80)+(texto.length>80?'...':''),cls);
+        updateStats();
+      });
+    });
+    addFeed('SISTEMA','Firebase','✅ Monitoramento ativo em tempo real.');
+  }catch(e){addFeed('ERRO','Firebase','❌ '+e.message);}
+}
+
+// ── SEED DEMO ─────────────────────────────────────────────────────────
+function injetarCrise(){
+  if(!window._fbReady){ alert('Firebase não conectado. Clique em Monitorar ao Vivo primeiro.'); return; }
+  var num = document.getElementById('criseNum').value.trim() || '001';
+  var titulo = document.getElementById('criseTitulo').value.trim();
+  var texto = document.getElementById('criseTexto').value.trim();
+  var mission = document.getElementById('missionFilter').value.trim() || 'urano-geral';
+  if(!titulo || !texto){ alert('Preencha o título e a descrição da crise.'); return; }
+  var status = document.getElementById('criseStatus');
+  status.textContent = '⏳ Enviando...';
+  status.style.color = 'var(--gold)';
+  try {
+    var { addDoc, collection, serverTimestamp } = window._fb;
+    var db = window._db;
+    addDoc(collection(db, 'crises', mission, 'eventos'), {
+      numero: num,
+      titulo: titulo,
+      texto: texto,
+      missao: mission,
+      timestamp: serverTimestamp(),
+      tipo: 'crise'
+    }).then(function(){
+      status.textContent = '✅ Crise injetada! Aparecerá para todos os alunos.';
+      status.style.color = 'var(--green4)';
+      addFeed('CRISE','Professor','⚠️ Crise Nº '+num+' injetada: '+titulo,'alert');
+      // Incrementar número para próxima
+      var next = String(parseInt(num)+1).padStart(3,'0');
+      document.getElementById('criseNum').value = next;
+      setTimeout(function(){ status.textContent=''; }, 5000);
+    }).catch(function(e){
+      status.textContent = '❌ Erro: '+e.message;
+      status.style.color = 'var(--red3)';
+    });
+  } catch(e) {
+    status.textContent = '❌ Erro: '+e.message;
+    status.style.color = 'var(--red3)';
+  }
+}
+
+function seedDemo(){
+  const mock=[
+    {id:'zhukov',count:8,dir:3},{id:'vasilevsky',count:6,dir:2},{id:'shumilov',count:5,dir:2},
+    {id:'chuikov',count:7,dir:2},{id:'mikhailov',count:4,dir:1},{id:'yeremenko',count:5,dir:1},
+    {id:'vatutin',count:4,dir:1},{id:'konev',count:3,dir:0},{id:'khrushchev',count:2,dir:0},
+  ];
+  mock.forEach(m=>{
+    state.activities[m.id]={count:m.count,directives:m.dir,lastTime:'--:--',history:[{time:'--:--',tipo:'mensagem',texto:'Atividade demo.'}]};
+    state.online.add(m.id);
+    state.totalMessages+=m.count;
+    state.totalDirectives+=m.dir;
+  });
+  addFeed('SISTEMA','Painel','📊 Dados demonstrativos carregados. Clique em "Monitorar ao Vivo" para dados reais.');
+  updateStats();
+}
+
+seedDemo();
+</script>
+</body>
+</html>

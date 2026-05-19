@@ -36,15 +36,16 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .app{display:flex;height:calc(100vh - 48px);overflow:hidden}
 .left{width:270px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;background:var(--surface)}
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.right{width:240px;flex-shrink:0;border-left:1px solid var(--border);overflow-y:auto;background:var(--surface)}
+.right{width:280px;flex-shrink:0;border-left:1px solid var(--border);overflow-y:auto;background:var(--surface)}
 
 .ptitle{font-size:8px;color:var(--gold);letter-spacing:3px;padding:7px 11px;border-bottom:1px solid var(--border);text-transform:uppercase;background:var(--surface2);position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:5px;flex-shrink:0}
 .ptitle::before{content:'//';color:var(--dim)}
 
 /* ── TABS ── */
 .tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface2)}
-.tab{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:inherit;font-size:9px;padding:9px 14px;cursor:pointer;letter-spacing:2px;text-transform:uppercase;transition:all 0.15s}
+.tab{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:inherit;font-size:9px;padding:9px 14px;cursor:pointer;letter-spacing:2px;text-transform:uppercase;transition:all 0.15s;white-space:nowrap}
 .tab:hover{color:var(--text)}.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.tab.crises{color:#d44040}.tab.crises.active{color:var(--soviet);border-bottom-color:var(--soviet)}
 .tabpanel{display:none;flex:1;flex-direction:column;overflow:hidden}.tabpanel.active{display:flex}
 
 /* ── DELEGATE LIST ── */
@@ -106,6 +107,51 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .det-student{font-size:10px;color:var(--muted);margin-top:2px}
 .det-role{font-size:9px;color:var(--green3);letter-spacing:1px;margin-top:3px;text-transform:uppercase}
 
+/* ── BANCO DE CRISES ── */
+.crises-toolbar{display:flex;gap:8px;padding:10px;background:var(--surface2);border-bottom:1px solid var(--border);flex-shrink:0;align-items:center;flex-wrap:wrap}
+.crises-toolbar label{font-size:8px;color:var(--soviet);letter-spacing:2px;text-transform:uppercase}
+.crises-toolbar select{background:var(--bg);border:1px solid var(--red2);color:var(--text);font-family:inherit;font-size:10px;padding:5px 8px;outline:none;cursor:pointer}
+.crises-toolbar select:focus{border-color:var(--red3)}
+.crises-counter{margin-left:auto;font-size:9px;color:var(--muted);letter-spacing:2px}
+.crises-counter strong{color:var(--soviet)}
+
+.crises-list{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.crise-card{background:var(--surface2);border:1px solid var(--border2);border-left:3px solid var(--red2);padding:11px 13px;transition:all 0.15s;position:relative}
+.crise-card:hover{border-color:var(--border3);border-left-color:var(--red3);background:var(--surface3)}
+.crise-card.sent{border-left-color:var(--green3);opacity:0.75}
+.crise-card.sent::after{content:'✓';position:absolute;top:8px;right:10px;color:var(--green4);font-size:14px;font-weight:bold}
+.crise-card.featured-target{border-color:#5a4010}
+
+.crise-hdr{display:flex;align-items:center;gap:8px;margin-bottom:7px;flex-wrap:wrap}
+.crise-num{background:var(--red2);color:#fff;font-size:9px;font-weight:700;letter-spacing:1px;padding:2px 7px;border-radius:2px}
+.crise-card.sent .crise-num{background:var(--green3)}
+.crise-day{font-size:9px;color:var(--gold);letter-spacing:2px;text-transform:uppercase}
+.crise-cat{font-size:8px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;padding:1px 6px;border:1px solid var(--border2)}
+.crise-cat.militar{color:#d44040;border-color:#a02020}
+.crise-cat.logistica{color:#c8a84a;border-color:#5a4010}
+.crise-cat.politica{color:#8a7acc;border-color:#403060}
+.crise-cat.diplomatica{color:#5acccc;border-color:#205060}
+.crise-target{font-size:9px;color:var(--text2);margin-left:auto;display:flex;align-items:center;gap:4px}
+.crise-target.featured{color:var(--gold)}
+
+.crise-titulo{font-family:'Special Elite',serif;font-size:13px;color:var(--text);margin-bottom:5px;line-height:1.3}
+.crise-preview{font-size:10px;color:var(--muted);line-height:1.5;margin-bottom:9px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.crise-card.expanded .crise-preview{-webkit-line-clamp:unset;display:block}
+.crise-full{display:none;font-size:10px;color:var(--text2);line-height:1.6;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border2)}
+.crise-card.expanded .crise-full{display:block}
+.crise-full strong{color:var(--gold);letter-spacing:1px;display:block;margin-bottom:3px;font-size:9px;text-transform:uppercase}
+.crise-full p{margin-bottom:8px}
+.crise-sent-time{font-size:8px;color:var(--green4);letter-spacing:2px;margin-top:5px}
+
+.crise-actions{display:flex;gap:6px;margin-top:8px}
+.crise-btn{background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:inherit;font-size:9px;padding:5px 11px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:all 0.15s;flex:0 0 auto}
+.crise-btn:hover{border-color:var(--gold);color:var(--gold);background:var(--surface3)}
+.crise-btn.inject{background:var(--red2);color:#fff;border-color:var(--red2)}
+.crise-btn.inject:hover{background:var(--red3);border-color:var(--red3)}
+.crise-btn.inject.disabled,.crise-btn.inject:disabled{background:var(--surface3);color:var(--muted);cursor:not-allowed;border-color:var(--border)}
+.crise-btn.reinject{background:transparent;border-color:var(--gold);color:var(--gold)}
+.crise-btn.reinject:hover{background:var(--gold);color:#060800}
+
 /* ── INTEL ── */
 .icard{background:var(--surface2);border:1px solid var(--border);padding:9px;margin:6px 8px 0}
 .icard h3{font-size:8px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;display:flex;align-items:center;gap:5px}
@@ -163,6 +209,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
       <button class="tab active" onclick="switchTab('overview')">📊 VISÃO GERAL</button>
       <button class="tab" onclick="switchTab('feed')">📡 ATIVIDADE AO VIVO</button>
       <button class="tab" onclick="switchTab('detail')">🎖️ DETALHE OFICIAL</button>
+      <button class="tab crises" onclick="switchTab('crises')">📜 BANCO DE CRISES</button>
     </div>
 
     <!-- OVERVIEW -->
@@ -189,6 +236,35 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
       <div class="detail-wrap" id="detailWrap">
         <div class="no-sel">Selecione um oficial na lista à esquerda para ver detalhes</div>
       </div>
+    </div>
+
+    <!-- BANCO DE CRISES (NOVO) -->
+    <div class="tabpanel" id="tab-crises">
+      <div class="crises-toolbar">
+        <label>Categoria</label>
+        <select id="filterCat" onchange="renderCrises()">
+          <option value="">Todas</option>
+          <option value="militar">Militar</option>
+          <option value="logistica">Logística</option>
+          <option value="politica">Política</option>
+          <option value="diplomatica">Diplomática</option>
+        </select>
+        <label>Destinatário</label>
+        <select id="filterTarget" onchange="renderCrises()">
+          <option value="">Todos</option>
+          <option value="turma">Turma toda</option>
+          <option value="shumilov">★ Shumilov (64º Ex.)</option>
+          <option value="mikhailov">★ Mikhailov (Logística)</option>
+        </select>
+        <label>Estado</label>
+        <select id="filterStatus" onchange="renderCrises()">
+          <option value="">Todas</option>
+          <option value="pending">Não enviadas</option>
+          <option value="sent">Já enviadas</option>
+        </select>
+        <div class="crises-counter">📊 <strong id="counterSent">0</strong>/<span id="counterTotal">18</span> enviadas</div>
+      </div>
+      <div class="crises-list" id="crisesList"></div>
     </div>
 
   </div><!-- /main -->
@@ -238,20 +314,31 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 
     <div class="fb-config">
       <label>Conectar ao Firebase</label>
-      <input type="text" id="missionFilter" placeholder="Filtrar por código de missão..." />
+      <input type="text" id="missionFilter" placeholder="Código da missão..." value="urano-geral" />
       <button onclick="connectLive()">⚡ MONITORAR AO VIVO</button>
     </div>
 
-    <div class="icard" style="margin:6px 8px 0;background:rgba(139,26,26,0.12);border:1px solid var(--red2)">
-      <h3 style="color:var(--red3)">Injetar Crise</h3>
-      <div style="font-size:9px;color:var(--muted);margin-bottom:8px;line-height:1.6">Envie uma situação-problema aos delegados em tempo real. O modal de crise aparecerá na tela de todos os alunos conectados.</div>
+    <div class="icard" style="margin:6px 8px 0;background:rgba(139,26,26,0.10);border:1px solid var(--red2)">
+      <h3 style="color:var(--red3)">✏️ Crise Personalizada</h3>
+      <div style="font-size:9px;color:var(--muted);margin-bottom:8px;line-height:1.6">Pra crises livres, sem usar o banco. <strong style="color:var(--soviet)">Para crises pré-prontas históricas use a aba "BANCO DE CRISES".</strong></div>
       <label style="font-size:8px;color:var(--red3);letter-spacing:2px;display:block;margin-bottom:4px;text-transform:uppercase">Nº da Crise</label>
-      <input type="text" id="criseNum" placeholder="Ex: 001" value="001" style="width:100%;background:var(--bg);border:1px solid var(--red2);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 8px;outline:none;margin-bottom:5px"/>
+      <input type="text" id="criseNum" placeholder="001" value="999" style="width:100%;background:var(--bg);border:1px solid var(--red2);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 8px;outline:none;margin-bottom:5px"/>
+      <label style="font-size:8px;color:var(--red3);letter-spacing:2px;display:block;margin-bottom:4px;text-transform:uppercase">Destinatário</label>
+      <select id="criseDestinatario" style="width:100%;background:var(--bg);border:1px solid var(--red2);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 8px;outline:none;margin-bottom:5px">
+        <option value="turma">Turma toda</option>
+        <option value="shumilov">★ Shumilov (64º Ex.)</option>
+        <option value="mikhailov">★ Mikhailov (Logística)</option>
+        <option value="yeremenko">Yeremenko</option>
+        <option value="zhukov">Zhukov</option>
+        <option value="vasilevsky">Vasilevsky</option>
+        <option value="chuikov">Chuikov</option>
+        <option value="khrushchev">Khrushchev</option>
+      </select>
       <label style="font-size:8px;color:var(--red3);letter-spacing:2px;display:block;margin-bottom:4px;text-transform:uppercase">Título</label>
-      <input type="text" id="criseTitulo" placeholder="Ex: Contraataque Alemão no Flanco Sul" style="width:100%;background:var(--bg);border:1px solid var(--red2);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 8px;outline:none;margin-bottom:5px"/>
-      <label style="font-size:8px;color:var(--red3);letter-spacing:2px;display:block;margin-bottom:4px;text-transform:uppercase">Descrição da Crise</label>
-      <textarea id="criseTexto" rows="4" placeholder="Descreva a situação-problema que os delegados devem resolver..." style="width:100%;background:var(--bg);border:1px solid var(--red2);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 8px;outline:none;resize:vertical;margin-bottom:5px"></textarea>
-      <button onclick="injetarCrise()" style="width:100%;background:var(--red2);color:#fff;border:none;padding:7px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:2px;transition:background 0.15s" onmouseover="this.style.background='var(--red3)'" onmouseout="this.style.background='var(--red2)'">⚡ INJETAR CRISE AGORA</button>
+      <input type="text" id="criseTitulo" placeholder="Ex: Contraataque inesperado..." style="width:100%;background:var(--bg);border:1px solid var(--red2);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 8px;outline:none;margin-bottom:5px"/>
+      <label style="font-size:8px;color:var(--red3);letter-spacing:2px;display:block;margin-bottom:4px;text-transform:uppercase">Descrição</label>
+      <textarea id="criseTexto" rows="3" placeholder="Situação..." style="width:100%;background:var(--bg);border:1px solid var(--red2);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 8px;outline:none;resize:vertical;margin-bottom:5px"></textarea>
+      <button onclick="injetarCrise()" style="width:100%;background:var(--red2);color:#fff;border:none;padding:7px;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:2px;transition:background 0.15s" onmouseover="this.style.background='var(--red3)'" onmouseout="this.style.background='var(--red2)'">⚡ INJETAR PERSONALIZADA</button>
       <div id="criseStatus" style="font-size:9px;color:var(--green4);margin-top:5px;min-height:14px"></div>
     </div>
 
@@ -282,7 +369,141 @@ window._fbReady = true;
 </script>
 
 <script>
-// ── TODOS OS 26 DELEGADOS ────────────────────────────────────────────
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  BANCO DE CRISES — OPERAÇÃO URANO (18 crises pré-prontas)        ║
+// ╚══════════════════════════════════════════════════════════════════╝
+const CRISES_BANCO = [
+  {
+    id:'urano-001', numero:'001', dia:1, data:'19 Nov 1942', hora:'07:00h',
+    titulo:'Hora H sob Nevoeiro',
+    destinatario:'turma', destinatarioLabel:'Turma toda', categoria:'militar',
+    contexto:'Camaradas do Stavka, são 07:00h. Em vinte minutos, três mil canhões soviéticos romperão o silêncio da estepe do Don para iniciar a Operação Urano. Os Camaradas Vatutin (Frente Sudoeste) e Rokossovsky (Frente do Don) aguardam a ordem final de lançamento. Mas há um problema imprevisto: uma densa neblina cobre toda a frente desde a madrugada. Os observadores avançados não conseguem visualizar as posições inimigas. A aviação de apoio (17ª Frota Aérea) está em terra. Sem reconhecimento visual, o bombardeio será baseado apenas em mapas e dados de inteligência prévios — com erros de até 200 metros nas coordenadas.',
+    desafio:'O Camarada Stalin exige decisão imediata. Manter o cronograma original (07:20h) e desencadear Urano cega de visão? Adiar 24 horas aguardando dispersão do nevoeiro, arriscando perder o fator surpresa? Ou lançar a artilharia mas reter a aviação e os blindados até o tempo melhorar? Cada hora de espera é uma hora a mais para o inimigo se preparar. Cada hora de avanço cego é uma hora a mais de tropas soviéticas mortas por fogo amigo.'
+  },
+  {
+    id:'urano-002', numero:'002', dia:2, data:'20 Nov 1942', hora:'14:30h',
+    titulo:'O Colapso do 4º Romeno',
+    destinatario:'shumilov', destinatarioLabel:'★ Shumilov (64º Ex.)', categoria:'militar',
+    contexto:'Camarada Shumilov, são 14:30h do segundo dia da Operação Urano. Há quatro horas a Frente de Stalingrado (Camarada Yeremenko) lançou o braço sul da grande pinça. As primeiras notícias do setor sul são extraordinárias: o 4º Exército Romeno do General Constantinescu está em colapso total no setor de Tundutovo. Batalhões inteiros depõem armas. As estradas estão entupidas de prisioneiros romenos famélicos. O 4º Exército Panzer do General Hoth, que pressiona o seu 64º há semanas, tenta freneticamente fechar a brecha — mas está dispersando forças.',
+    desafio:'Sua janela de oportunidade é estreita, Camarada. Avançar agressivamente seu 64º Exército para o flanco direito de Hoth, aproveitando a brecha para envolvê-lo pelo sul? Ou manter posição defensiva, fixando Hoth na linha atual para impedir que ele se redisloque a fim de socorrer o 6º Exército? Cada decisão tem custos: avançar expõe seu próprio flanco; ficar parado deixa Hoth reorganizar a defesa. O Stavka aguarda sua proposta operacional em 30 minutos.'
+  },
+  {
+    id:'urano-003', numero:'003', dia:3, data:'21 Nov 1942', hora:'06:00h',
+    titulo:'A Crise dos Tanques Sem Combustível',
+    destinatario:'mikhailov', destinatarioLabel:'★ Mikhailov (Logística)', categoria:'logistica',
+    contexto:'Camarada Mikhailov, é amanhecer. Em 48 horas, os tanques soviéticos avançaram 80 quilômetros pela estepe — uma velocidade jamais vista. Mas o sucesso militar criou uma crise logística sem precedentes: a 4ª Brigada Blindada do Coronel Filippenko está a 40 km de Kalach com tanques T-34 imobilizados por falta de combustível. Os comboios de abastecimento previstos estão atrasados pela mesma estepe gelada que os tanques cruzaram. O Volga começa a congelar — as balsas de suprimento operam em ritmo reduzido. E pior: a Luftwaffe identificou a coluna parada e enviou Stukas para ataque.',
+    desafio:'Cada minuto pesa, Camarada. Lançar combustível por via aérea (PE-2 e LI-2 disponíveis, mas capacidade limitada a 80 toneladas/dia e voos diurnos vulneráveis)? Drenar combustível de unidades de retaguarda para reabastecer Filippenko (deixa essas unidades imobilizadas por 48h)? Acelerar o comboio terrestre via Serafimovich (risco de emboscada de unidades alemãs perdidas na retaguarda)? Sua decisão definirá se Kalach cairá em 3 ou 7 dias — e cada dia adicional custa centenas de vidas soviéticas dentro de Stalingrado.'
+  },
+  {
+    id:'urano-004', numero:'004', dia:4, data:'22 Nov 1942', hora:'11:00h',
+    titulo:'Hitler Proíbe a Retirada',
+    destinatario:'turma', destinatarioLabel:'Turma toda', categoria:'militar',
+    contexto:'Camaradas, nossa inteligência da NKVD interceptou esta madrugada uma transmissão crítica do OKW alemão para o General Paulus, comandante do 6º Exército. Hitler proíbe expressamente qualquer retirada de Stalingrado, com a frase textual: "Wo der deutsche Soldat hintritt, dort bleibt er" (Onde o soldado alemão pisa, ele fica). Paulus, generais Seydlitz e Hube discutiram em conferência interna a possibilidade de romper para oeste antes que o cerco se feche — mas Hitler vetou. A ponte aérea prometida por Goering (750t/dia) é mencionada como solução.',
+    desafio:'Esta interceptação é ouro estratégico. Acelerar o fechamento do cerco em Kalach nas próximas 24 horas, garantindo que Paulus não possa escapar mesmo se mudar de ideia? Concentrar forças antiaéreas e caças para sabotar a ponte aérea ainda no berço? Difundir a interceptação via Pravda como vitória propagandística — risco de revelar fontes da NKVD? Ou as três simultaneamente? Cada minuto perdido aumenta a chance de Hitler reconsiderar.'
+  },
+  {
+    id:'urano-005', numero:'005', dia:5, data:'23 Nov 1942', hora:'16:00h',
+    titulo:'Sovetsky: O Aperto Histórico',
+    destinatario:'turma', destinatarioLabel:'Turma toda', categoria:'militar',
+    contexto:'Camaradas! Ao meio-dia de hoje, na ponte de Sovetsky sobre o Don, junto a Kalach, ocorreu o encontro histórico: a Brigada Blindada do Coronel Filippenko (Frente Sudoeste) abraçou a Brigada do Coronel Russiyanov (Frente de Stalingrado). O 6º Exército alemão de Paulus está cercado — 330.000 soldados encerclados em 1.500 km². Em 4 dias e 5 horas, o Exército Vermelho realizou o que nenhum exército do mundo havia feito contra a Wehrmacht. Mas há um problema imediato: o anel é fino. O Camarada Vatutin tem 3 divisões cobrindo um perímetro de 500 km. Manstein pode estar mobilizando o socorro.',
+    desafio:'A vitória é incompleta. Reforçar imediatamente o anel externo com reservas do Stavka (Camarada Malinovsky e a 2ª Guarda)? Investir no anel interno para esmagar o 6º rapidamente, antes que se reorganize? Anunciar a vitória ao mundo via Pravda, BBC e Reuters — risco de Hitler responder com retaliação? O Camarada Stalin solicita um plano consolidado das duas próximas semanas em 1 hora.'
+  },
+  {
+    id:'urano-006', numero:'006', dia:7, data:'25 Nov 1942', hora:'03:45h',
+    titulo:'Paulus Tenta Romper pelo Sul',
+    destinatario:'shumilov', destinatarioLabel:'★ Shumilov (64º Ex.)', categoria:'militar',
+    contexto:'Camarada Shumilov, são 03:45h. Postos avançados do seu 64º Exército no setor de Karpovka relatam forte movimentação noturna de blindados alemães. Reconhecimento confirma: o General Hube, comandante do XIV Corpo Panzer dentro do Kessel, organizou às pressas um agrupamento de cerca de 60 tanques e 4.000 fuzileiros para tentar romper o cerco em direção ao sudoeste, ao encontro do Hoth. Paulus ainda não autorizou oficialmente — Hitler proibiu — mas Hube está agindo por iniciativa própria, contrariando ordens. O ataque é iminente, possivelmente nas próximas 2 horas.',
+    desafio:'Sua posição está exatamente no caminho da fuga, Camarada. Concentrar artilharia antitanque na rota provável e aniquilar a coluna em campo aberto? Permitir o avanço inicial e contra-atacar pelas laterais, capturando Hube vivo como general dissidente? Solicitar reforço urgente de Yeremenko (chegará em 90 min, depois pode ser tarde)? O Camarada Khrushchev já está a caminho do seu posto de comando para acompanhar pessoalmente a operação.'
+  },
+  {
+    id:'urano-007', numero:'007', dia:8, data:'26 Nov 1942', hora:'05:30h',
+    titulo:'O Volga Congela',
+    destinatario:'mikhailov', destinatarioLabel:'★ Mikhailov (Logística)', categoria:'logistica',
+    contexto:'Camarada Mikhailov, os hidrologistas militares do Don confirmaram esta madrugada: a temperatura caiu para -22°C e a camada de gelo no Volga atingiu 18 cm — insuficiente para travessias seguras, mas suficiente para interromper as balsas. A "Voznesensky Pereprava" (travessia do Volga) é a artéria vital que abastece o 62º Exército do Camarada Chuikov dentro de Stalingrado. Hoje, as balsas pararam. Em 5 a 7 dias, o gelo terá 40 cm e suportará caminhões. Mas nesse intervalo — chamado pelos engenheiros de "Período da Morte" — o 62º ficará isolado.',
+    desafio:'Você tem 7 dias para resolver, Camarada. Acumular suprimentos do lado leste agora, pra forçar entregas em massa antes que o gelo fique transitável (logística terrestre noturna sob fogo)? Improvisar passarelas de tábuas sobre gelo fino para infantaria leve (perigoso, mas possível)? Usar aeronaves Po-2 em voos rasantes noturnos para entregar munição (baixa capacidade, mas funcional)? Chuikov tem rações para 4 dias. Decida com calma — qualquer erro custa o 62º Exército.'
+  },
+  {
+    id:'urano-008', numero:'008', dia:12, data:'30 Nov 1942', hora:'19:00h',
+    titulo:'A Pravda Quer Manchete',
+    destinatario:'turma', destinatarioLabel:'Turma toda', categoria:'diplomatica',
+    contexto:'Camaradas, o Camarada Andrei Zhdanov, secretário do Comitê Central do Partido em Moscou, transmite solicitação direta do Politburo: a Pravda precisa de uma manchete vitoriosa para a edição de amanhã, 1º de dezembro. A vitória de Kalach já foi noticiada. O Politburo agora quer uma mensagem que galvanize não só o povo soviético, mas também os povos da Europa ocupada e os aliados ocidentais (Roosevelt, Churchill). A mensagem precisa ser assinada coletivamente pelos comandantes da Frente. Há uma janela curta: a edição fecha às 23:00h.',
+    desafio:'Tom triunfalista ("O 6º Exército está aniquilado"), arriscando exagero antes da capitulação real? Tom científico-militar ("A doutrina das operações em profundidade comprovou-se em Stalingrado"), profundo mas frio? Tom humano ("Em nome dos camaradas mortos defendendo o Volga, prometemos vingar Stalingrado"), emocional e mobilizador? Quem assina: só o Stavka? Os comandantes das frentes? Inclui Khrushchev (comissário político)? O Camarada Stalin lerá o texto antes de publicar.'
+  },
+  {
+    id:'urano-009', numero:'009', dia:14, data:'2 Dez 1942', hora:'08:00h',
+    titulo:'Quebrar a Ponte Aérea',
+    destinatario:'mikhailov', destinatarioLabel:'★ Mikhailov (Logística)', categoria:'logistica',
+    contexto:'Camarada Mikhailov, a inteligência soviética identificou os 4 aeródromos alemães que sustentam a "Luftbrücke" (ponte aérea) ao Kessel: Tatsinskaya, Morozovsk, Pitomnik (dentro do Kessel) e Gumrak (também dentro). A Luftwaffe está entregando em média 100t/dia ao 6º Exército — apenas 13% das 750t necessárias prometidas por Goering. Mesmo assim, é o suficiente pra manter Paulus respirando. Cada Ju-52 abatido custa à Alemanha cerca de 8 toneladas de carga e 3 pilotos qualificados.',
+    desafio:'Como coordenar logística + militar para estrangular a ponte aérea? Concentrar baterias antiaéreas 85mm e caças Yak-1 nas rotas conhecidas Tatsinskaya→Kessel (eficaz, mas exige redislocação massiva)? Apoiar uma incursão profunda blindada (Camarada Badanov com o 24º Corpo) para destruir Tatsinskaya em terra — risco altíssimo, ganho enorme? Sabotagem partisan nos depósitos de combustível alemães? Cada plano tem custos. O Stavka pede sua recomendação até as 14:00h.'
+  },
+  {
+    id:'urano-010', numero:'010', dia:18, data:'6 Dez 1942', hora:'21:00h',
+    titulo:'Comissários para Manter a Disciplina',
+    destinatario:'turma', destinatarioLabel:'Turma toda', categoria:'politica',
+    contexto:'Camaradas, o Camarada Khrushchev, comissário político da Frente de Stalingrado, levanta questão delicada. Após 18 dias de campanha vitoriosa, observa-se relaxamento da disciplina em algumas unidades: relatos de saqueio em aldeias romenas reocupadas, oficiais subordinados questionando ordens em alta voz, embriaguez nas linhas de retaguarda do Don. A vitória, paradoxalmente, está enfraquecendo a coesão soviética. Khrushchev solicita autorização para destacar 40 comissários políticos adicionais das reservas de Moscou para reforçar a vigilância ideológica nas linhas avançadas.',
+    desafio:'A questão é sensível, Camaradas. Aprovar imediatamente os 40 comissários (sinal de disciplina firme, mas pode parecer desconfiança aos comandantes militares vitoriosos)? Negar e reforçar a autoridade dos oficiais militares (Zhukov tradicionalmente defende isto, mas pode permitir relaxamento crescente)? Solução híbrida — 10 comissários só nas unidades problemáticas + cartas pessoais de Stalin aos comandantes louvando a disciplina existente? Cada decisão envia um sinal político à NKVD e ao Estado-Maior.'
+  },
+  {
+    id:'urano-011', numero:'011', dia:24, data:'12 Dez 1942', hora:'06:00h',
+    titulo:'Wintergewitter! Manstein Ataca!',
+    destinatario:'turma', destinatarioLabel:'Turma toda', categoria:'militar',
+    contexto:'ALERTA MÁXIMO, CAMARADAS! Às 05:30h desta manhã, o Grupo de Exércitos Don do Marechal Erich von Manstein iniciou a Operação Wintergewitter ("Tempestade de Inverno"). O 4º Exército Panzer alemão de Hoth, reforçado com a 6ª Divisão Panzer recém-chegada da França, lançou-se desde Kotelnikovo em direção ao norte, com objetivo de abrir corredor até o Kessel. Aproximadamente 230 tanques alemães avançam pelo eixo do rio Aksai. O Camarada Lelyushenko (51º Exército) está sob pressão extrema. Manstein é considerado pelo OKW o melhor estrategista alemão — não é Paulus.',
+    desafio:'A decisão dos próximos 60 minutos definirá a campanha. Lançar imediatamente a 2ª Exército da Guarda do Camarada Malinovsky (90.000 homens, 600 tanques, reserva estratégica do Stavka) para reforçar a linha do rio Myshkova? Ou mantê-la oculta aguardando Manstein avançar mais 40 km para desferir um contragolpe devastador no flanco norte? Sacrificar o 51º como força de retardamento ou deslocar reservas das frentes do Don (enfraquecendo o cerco do Kessel)? O Camarada Stalin está em linha direta. Decisão em 60 minutos.'
+  },
+  {
+    id:'urano-012', numero:'012', dia:26, data:'14 Dez 1942', hora:'17:00h',
+    titulo:'Myshkova: A Linha que Não Pode Ceder',
+    destinatario:'shumilov', destinatarioLabel:'★ Shumilov (64º Ex.)', categoria:'militar',
+    contexto:'Camarada Shumilov, três dias após o início de Wintergewitter, Hoth conseguiu avançar 30 km. Está a apenas 48 km do Kessel. A 2ª Guarda do Camarada Malinovsky cavou posições no rio Myshkova, mas as primeiras unidades chegaram cansadas após marcha forçada de 200 km. Paulus, dentro do Kessel, recebeu autorização condicional de Hitler para iniciar a Operação Donnerschlag ("Trovão") — romper de dentro para fora se Hoth chegar a 30 km. Seu 64º Exército está hoje em posição vulnerável: pressionado pelo Kessel pelo norte e por possível flanqueio de Hoth pelo sul.',
+    desafio:'A situação é crítica, Camarada. Manter posição rígida no setor sul confiando que Malinovsky parará Hoth em Myshkova (heroico, mas se Hoth romper, seu exército fica esmagado entre dois fogos)? Recuar seletivamente 10 km para manter linha de comunicação com Malinovsky (perde território, mas preserva integridade)? Atacar agressivamente o anel interno do Kessel para forçar Paulus a manter suas tropas dentro (alivia Myshkova, mas custos altos)? O Camarada Yeremenko aguarda seu parecer em 30 minutos.'
+  },
+  {
+    id:'urano-013', numero:'013', dia:28, data:'16 Dez 1942', hora:'08:00h',
+    titulo:'A Surpresa do Saturno',
+    destinatario:'turma', destinatarioLabel:'Turma toda', categoria:'militar',
+    contexto:'Camaradas, o Camarada Vasilevsky comunica do Stavka: a Operação Pequena Saturno foi desencadeada às 07:30h desta manhã. A Frente Sudoeste do Camarada Vatutin e a Frente Voronezh do Camarada Golikov atacaram o setor do médio Don ocupado pelo 8º Exército Italiano do General Gariboldi. As primeiras notícias são triunfais: os italianos, mal equipados para o inverno e moralmente desmoralizados, estão em colapso similar ao dos romenos em novembro. A questão estratégica é maior: enquanto Manstein concentra todo o esforço alemão em Wintergewitter ao sul, seu flanco norte está exposto.',
+    desafio:'Como aproveitar o momentum? Expandir Pequena Saturno para Operação Saturno completa, visando Rostov-no-Don (libertar todo o sul soviético — alcance ambicioso)? Concentrar a ofensiva em capturar Tatsinskaya e Morozovsk, destruindo a base aérea alemã (objetivo mais limitado, mas decisivo para o Kessel)? Manter Saturno como manobra diversionária enquanto reforça posições defensivas em Myshkova contra Hoth? A janela de oportunidade durará entre 7 a 14 dias.'
+  },
+  {
+    id:'urano-014', numero:'014', dia:35, data:'23 Dez 1942', hora:'02:00h',
+    titulo:'Tatsinskaya: O Golpe Cirúrgico',
+    destinatario:'mikhailov', destinatarioLabel:'★ Mikhailov (Logística)', categoria:'logistica',
+    contexto:'Camarada Mikhailov, são 02:00h. O Camarada General Vasily Badanov, comandante do 24º Corpo de Tanques, executou nas últimas 5 dias uma das mais ousadas incursões da história militar: 240 km atrás das linhas inimigas, em pleno inverno soviético. Às 23:00h de ontem, suas forças irromperam no aeródromo de Tatsinskaya. Cerca de 70 aviões Ju-52 da Luftwaffe estão destruídos no solo. Pilotos, tripulações e equipamentos pegados de surpresa. Mas Badanov agora está cercado: divisões alemãs convergem para retomar o aeródromo. Combustível? Suficiente para mais 24 horas. Munição? 40% do estoque inicial.',
+    desafio:'Suporte logístico crítico, Camarada. Lançamento aéreo de combustível e munição sobre Tatsinskaya (Po-2 e Li-2, mas Luftwaffe ainda controla o espaço aéreo da região)? Operação de extração imediata — Badanov rompe para sul ao encontro do 25º Corpo de Tanques (rota arriscada, mas salva a unidade)? Sacrificar o 24º Corpo mantendo-o em Tatsinskaya até ser aniquilado, garantindo que a pista seja inutilizada por mais 72 horas? Cada hora em Tatsinskaya é uma hora a menos de suprimento aéreo ao Kessel. Cada hora a mais é uma hora a menos de chance de Badanov sobreviver.'
+  },
+  {
+    id:'urano-015', numero:'015', dia:43, data:'31 Dez 1942', hora:'18:00h',
+    titulo:'Carta de Ano Novo a Stalin',
+    destinatario:'turma', destinatarioLabel:'Turma toda', categoria:'politica',
+    contexto:'Camaradas, é 31 de dezembro. À meia-noite, o Camarada Stalin transmitirá pelo rádio sua mensagem de Ano Novo a toda a União Soviética. O Politburo solicita que o Stavka redija uma carta coletiva ao Camarada Stalin, em nome do Gabinete de Guerra da Frente de Stalingrado, a ser lida (ou citada) no discurso. A carta deve refletir: (1) o saldo dos 43 dias de Operação Urano; (2) o compromisso militar para 1943; (3) a relação política e ideológica entre o Exército Vermelho, o Partido e o povo. A Wintergewitter foi derrotada. Tatsinskaya, capturada. O Kessel está agonizando. Mas Manstein ainda existe — e Rostov, ainda alemã.',
+    desafio:'Decidir o tom da carta, Camaradas. Heroico e ortodoxo (modelo "Estamos prontos a morrer por Stalin, pela Pátria, pelo Partido") — apropriado, mas previsível? Realista e militar ("Os fatos militares falam por si: vencemos onde nenhum exército havia vencido") — moderno, pode parecer arrogante? Humano e camarada ("Em nome dos 200.000 soldados mortos defendendo Stalingrado, prometemos chegar a Berlim") — emocional, mobilizador, talvez polêmico? Quem assina: Zhukov só? Toda a hierarquia? O Camarada Stalin lerá pessoalmente antes do discurso.'
+  },
+  {
+    id:'urano-016', numero:'016', dia:53, data:'10 Jan 1943', hora:'06:00h',
+    titulo:'Ultimato a Paulus',
+    destinatario:'turma', destinatarioLabel:'Turma toda', categoria:'diplomatica',
+    contexto:'Camaradas, ontem o Camarada General Konstantin Rokossovsky, comandante da Frente do Don, enviou ao Marechal Paulus uma oferta formal de rendição honrosa: garantia de vida, alimentação, tratamento médico, retorno à Alemanha após a guerra, manutenção de patentes e condecorações para os oficiais. Paulus, sob ordens diretas de Hitler, recusou. Hoje às 08:05h, em resposta, foi desencadeada a Operação Anel (Koltso): 7.000 canhões soviéticos, 7 exércitos completos, 250 tanques, em ataque simultâneo do oeste para o leste. O Kessel será aniquilado. Mas o sangue derramado será de ambos os lados — milhares de soviéticos morrerão para forçar a rendição de um inimigo já agonizando.',
+    desafio:'Questão ética e estratégica, Camaradas. Manter a Operação Anel em ritmo máximo, aniquilando o 6º o mais rápido possível (preserva o momentum, mas custa muitas vidas soviéticas)? Pausar a Operação Anel e enviar nova oferta a Paulus, agora citando a Convenção de Haia (humanitário, mas dá tempo a Manstein)? Operação Anel parcial apenas no setor sul (Univermag, onde está Paulus), enquanto se negocia com generais subordinados separadamente? Cada caminho tem implicações políticas para a história — e a Convenção de Haia, lembrem-se, foi assinada pela URSS em 1907.'
+  },
+  {
+    id:'urano-017', numero:'017', dia:67, data:'24 Jan 1943', hora:'15:30h',
+    titulo:'O Kessel Partido em Dois',
+    destinatario:'shumilov', destinatarioLabel:'★ Shumilov (64º Ex.)', categoria:'militar',
+    contexto:'Camarada Shumilov, três horas atrás, em pleno coração de Stalingrado, no Mamayev Kurgan, ocorreu o segundo encontro histórico desta operação: suas forças do 64º Exército, vindas do sul, fizeram junção com as forças do 21º Exército do Camarada Chistyakov, vindas do oeste. O Kessel está agora partido em dois bolsões separados: o sul (Univermag), onde Paulus tem seu QG e cerca de 91.000 homens; e o norte (Tractor), sob comando do General Strecker com 35.000 soldados. As bandeiras vermelhas tremulam no Mamayev. Mas a luta não acabou — Paulus pode ainda comandar uma resistência prolongada.',
+    desafio:'Você comanda o setor sul agora, Camarada — onde está Paulus. Concentrar todas as forças no bolsão sul, forçando a captura de Paulus em 48 horas (custos altos, mas captura simbólica)? Negociar setor por setor com generais alemães subordinados (Seydlitz, Hube, Schmidt) tentando fragmentação política (lento, mas preserva vidas)? Combinar ataque ao sul + cerco do norte (Strecker mais isolado, capitula mais cedo, mas Paulus continua resistindo)? Khrushchev solicita captura cerimonial de Paulus vivo — o Politburo pretende usá-lo como símbolo.'
+  },
+  {
+    id:'urano-018', numero:'018', dia:75, data:'1 Fev 1943', hora:'09:00h',
+    titulo:'Como Tratar o Marechal Prisioneiro',
+    destinatario:'turma', destinatarioLabel:'Turma toda', categoria:'diplomatica',
+    contexto:'Camaradas, ontem às 06:15h, o Marechal de Campo Friedrich Paulus rendeu-se ao Tenente Fyodor Yelchenko no porão do Univermag. Hitler, ao saber, decretou três dias de luto nacional na Alemanha — mas em vez de execrar Paulus, Goebbels tentou esconder a rendição. Junto com Paulus, 22 generais alemães foram capturados. O bolsão norte resiste ainda hoje sob Strecker. A pergunta agora é: como tratar Paulus e os generais? Os aliados ocidentais observam com interesse. A Convenção de Haia exige tratamento honroso. O Politburo quer máximo aproveitamento político.',
+    desafio:'Decisão histórica internacional, Camaradas. Paulus prisioneiro em moldes tradicionais (residência fixa em Moscou, dieta digna, possibilidade de visita da família) — humanitário, gera boa imagem aos aliados ocidentais? Paulus como símbolo de propaganda anti-Hitler (entrevistas à Pravda, mensagens ao povo alemão pedindo deposição de Hitler, formação do "Comitê Nacional Alemão Livre") — politicamente potente, mas controverso? Paulus julgado por crimes de guerra (vingança pelas atrocidades alemãs em terras soviéticas, mas viola a Convenção de Haia) — popular internamente, prejudica relações com aliados? Cada caminho redefine a geopolítica pós-guerra.'
+  },
+];
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  TODOS OS 26 DELEGADOS                                            ║
+// ╚══════════════════════════════════════════════════════════════════╝
 const DELEGATES = [
   {id:'shumilov',    general:'Mikhail Shumilov',    student:'Analu S. A. de Almeida',       role:'Cmd. 64° Exército',                  featured:true},
   {id:'mikhailov',   general:'Semyon Mikhailov',    student:'Cecília Neves',                 role:'Apoio Logístico',                    featured:true},
@@ -312,7 +533,12 @@ const DELEGATES = [
   {id:'fedorov',     general:'Ivan I. Fedorov',     student:'Enzo Rafael Brasil C. Malaquias',role:'Cmd. Forças de Artilharia',         featured:false},
 ];
 
-const state = { activities:{}, selected:null, totalMessages:0, totalDirectives:0, online:new Set() };
+const state = { activities:{}, selected:null, totalMessages:0, totalDirectives:0, online:new Set(), crisesSent:{} };
+
+// Carrega estado de crises enviadas do localStorage (persistência simples)
+try {
+  state.crisesSent = JSON.parse(localStorage.getItem('crises_enviadas')||'{}');
+} catch(e) { state.crisesSent = {}; }
 
 // ── RELÓGIO ──────────────────────────────────────────────────────────
 setInterval(()=>{
@@ -322,13 +548,14 @@ setInterval(()=>{
 
 // ── TABS ──────────────────────────────────────────────────────────────
 function switchTab(t){
-  ['overview','feed','detail'].forEach((id,i)=>{
+  ['overview','feed','detail','crises'].forEach((id,i)=>{
     document.querySelectorAll('.tab')[i].classList.toggle('active',id===t);
     document.getElementById('tab-'+id).classList.toggle('active',id===t);
   });
+  if(t==='crises') renderCrises();
 }
 
-// ── RENDER LISTA ──────────────────────────────────────────────────────
+// ── RENDER LISTA DE DELEGADOS ─────────────────────────────────────────
 function renderList(){
   const el=document.getElementById('delegateList');
   el.innerHTML='<div class="faction-div">★ Representações Destaque</div>';
@@ -376,12 +603,10 @@ function updateStats(){
   const pct=Math.round(active/DELEGATES.length*100);
   document.getElementById('progPct').textContent=pct+'%';
   document.getElementById('progFill').style.width=pct+'%';
-  // Destaque
   const sh=state.activities['shumilov']||{};
   const mk=state.activities['mikhailov']||{};
   document.getElementById('statShumilov').textContent=`${sh.count||0} msgs · ${sh.directives||0} dir. · ${sh.lastTime||'—'}`;
   document.getElementById('statMikhailov').textContent=`${mk.count||0} msgs · ${mk.directives||0} dir. · ${mk.lastTime||'—'}`;
-  // Alertas
   const alerts=[];
   if(inactive>20)alerts.push(`⚠️ ${inactive} delegados sem atividade registrada.`);
   if(!(state.activities['shumilov']?.count))alerts.push('⚠️ Shumilov (Analu) ainda não interagiu.');
@@ -418,6 +643,120 @@ function selectDelegate(id){
   renderList();
 }
 
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  BANCO DE CRISES — RENDER / INJEÇÃO                               ║
+// ╚══════════════════════════════════════════════════════════════════╝
+function renderCrises(){
+  const cat = document.getElementById('filterCat').value;
+  const target = document.getElementById('filterTarget').value;
+  const status = document.getElementById('filterStatus').value;
+  const list = document.getElementById('crisesList');
+  list.innerHTML = '';
+
+  let filtered = CRISES_BANCO.slice();
+  if(cat) filtered = filtered.filter(c => c.categoria === cat);
+  if(target) filtered = filtered.filter(c => c.destinatario === target);
+  if(status === 'pending') filtered = filtered.filter(c => !state.crisesSent[c.id]);
+  if(status === 'sent') filtered = filtered.filter(c => state.crisesSent[c.id]);
+
+  filtered.sort((a,b) => a.dia - b.dia);
+
+  if(filtered.length === 0){
+    list.innerHTML = '<div style="text-align:center;color:var(--muted);padding:30px;font-size:11px;letter-spacing:2px">Nenhuma crise corresponde aos filtros aplicados.</div>';
+    document.getElementById('counterSent').textContent = Object.keys(state.crisesSent).length;
+    return;
+  }
+
+  filtered.forEach(c => {
+    const sent = state.crisesSent[c.id];
+    const isFeatured = c.destinatario === 'shumilov' || c.destinatario === 'mikhailov';
+    const div = document.createElement('div');
+    div.className = 'crise-card' + (sent ? ' sent' : '') + (isFeatured ? ' featured-target' : '');
+    div.innerHTML = `
+      <div class="crise-hdr">
+        <span class="crise-num">#${c.numero}</span>
+        <span class="crise-day">Dia ${c.dia} · ${c.data} · ${c.hora}</span>
+        <span class="crise-cat ${c.categoria}">${c.categoria}</span>
+        <span class="crise-target ${isFeatured?'featured':''}">→ ${c.destinatarioLabel}</span>
+      </div>
+      <div class="crise-titulo">${c.titulo}</div>
+      <div class="crise-preview">${c.contexto.substring(0,180)}...</div>
+      <div class="crise-full">
+        <strong>📜 CONTEXTO</strong>
+        <p>${c.contexto}</p>
+        <strong>⚔️ DESAFIO</strong>
+        <p>${c.desafio}</p>
+      </div>
+      ${sent ? `<div class="crise-sent-time">✓ ENVIADA ÀS ${sent.hora}${sent.count > 1 ? ' (×' + sent.count + ')' : ''}</div>` : ''}
+      <div class="crise-actions">
+        <button class="crise-btn" onclick="toggleCrise(this)">👁 ${sent?'VER':'EXPANDIR'}</button>
+        ${sent
+          ? `<button class="crise-btn reinject" onclick="injetarBanco('${c.id}', true)">↺ REENVIAR</button>`
+          : `<button class="crise-btn inject" onclick="injetarBanco('${c.id}', false)">⚡ INJETAR</button>`
+        }
+      </div>
+    `;
+    list.appendChild(div);
+  });
+
+  // Atualiza contador
+  document.getElementById('counterSent').textContent = Object.keys(state.crisesSent).length;
+}
+
+function toggleCrise(btn){
+  const card = btn.closest('.crise-card');
+  card.classList.toggle('expanded');
+  btn.textContent = card.classList.contains('expanded') ? '▲ FECHAR' : '👁 EXPANDIR';
+}
+
+function injetarBanco(criseId, isReinject){
+  const c = CRISES_BANCO.find(x => x.id === criseId);
+  if(!c){ alert('Crise não encontrada.'); return; }
+  if(!window._fbReady){ alert('Firebase não conectado. Clique em Monitorar ao Vivo primeiro.'); return; }
+
+  const mission = document.getElementById('missionFilter').value.trim() || 'urano-geral';
+  const textoCompleto = '📜 CONTEXTO\n\n' + c.contexto + '\n\n⚔️ DESAFIO\n\n' + c.desafio;
+
+  try {
+    const { addDoc, collection, serverTimestamp } = window._fb;
+    const db = window._db;
+    addDoc(collection(db, 'crises', mission, 'eventos'), {
+      numero: c.numero,
+      titulo: c.titulo,
+      texto: textoCompleto,
+      destinatario: c.destinatario,
+      destinatarioLabel: c.destinatarioLabel,
+      categoria: c.categoria,
+      dia: c.dia,
+      data: c.data,
+      hora: c.hora,
+      criseId: c.id,
+      missao: mission,
+      timestamp: serverTimestamp(),
+      tipo: 'crise',
+      origem: 'banco'
+    }).then(() => {
+      const now = new Date();
+      const hora = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+      // Marca como enviada
+      const existing = state.crisesSent[c.id] || { count: 0 };
+      state.crisesSent[c.id] = { hora: hora, count: (existing.count || 0) + 1 };
+      localStorage.setItem('crises_enviadas', JSON.stringify(state.crisesSent));
+      addFeed('CRISE-BANCO', 'Professor', `⚠️ Crise #${c.numero} "${c.titulo}" → ${c.destinatarioLabel}${isReinject?' (reenviada)':''}`, 'alert');
+      renderCrises();
+    }).catch(e => {
+      alert('Erro ao injetar: ' + e.message);
+    });
+  } catch(e) {
+    alert('Erro: ' + e.message);
+  }
+}
+
+// Torna funções globais
+window.injetarBanco = injetarBanco;
+window.toggleCrise = toggleCrise;
+window.renderCrises = renderCrises;
+
 // ── FEED ──────────────────────────────────────────────────────────────
 function addFeed(tipo,who,text,cls=''){
   const n=new Date(),p=x=>String(x).padStart(2,'0');
@@ -447,7 +786,6 @@ function connectLive(){
         const nome=data.oficial||'?';
         const tipo=data.tipo||'';
         const texto=data.texto||data.assunto||'';
-        // Atualiza estado
         if(!state.activities[delegId])state.activities[delegId]={count:0,directives:0,history:[]};
         const act=state.activities[delegId];
         if(tipo==='mensagem'){act.count++;state.totalMessages++;}
@@ -455,7 +793,6 @@ function connectLive(){
         act.lastTime=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
         act.history.push({time:act.lastTime,tipo,texto:texto.substring(0,100)});
         state.online.add(delegId);
-        // Feed
         const cls=tipo==='diretiva'?'dir':'';
         addFeed(tipo.toUpperCase(),nome,texto.substring(0,80)+(texto.length>80?'...':''),cls);
         updateStats();
@@ -465,10 +802,11 @@ function connectLive(){
   }catch(e){addFeed('ERRO','Firebase','❌ '+e.message);}
 }
 
-// ── SEED DEMO ─────────────────────────────────────────────────────────
+// ── CRISE PERSONALIZADA ──────────────────────────────────────────────
 function injetarCrise(){
   if(!window._fbReady){ alert('Firebase não conectado. Clique em Monitorar ao Vivo primeiro.'); return; }
-  var num = document.getElementById('criseNum').value.trim() || '001';
+  var num = document.getElementById('criseNum').value.trim() || '999';
+  var dest = document.getElementById('criseDestinatario').value;
   var titulo = document.getElementById('criseTitulo').value.trim();
   var texto = document.getElementById('criseTexto').value.trim();
   var mission = document.getElementById('missionFilter').value.trim() || 'urano-geral';
@@ -476,6 +814,15 @@ function injetarCrise(){
   var status = document.getElementById('criseStatus');
   status.textContent = '⏳ Enviando...';
   status.style.color = 'var(--gold)';
+
+  // Resolve label do destinatário
+  var destLabels = {
+    'turma':'Turma toda', 'shumilov':'★ Shumilov (64º Ex.)', 'mikhailov':'★ Mikhailov (Logística)',
+    'yeremenko':'Yeremenko', 'zhukov':'Zhukov', 'vasilevsky':'Vasilevsky',
+    'chuikov':'Chuikov', 'khrushchev':'Khrushchev'
+  };
+  var destLabel = destLabels[dest] || dest;
+
   try {
     var { addDoc, collection, serverTimestamp } = window._fb;
     var db = window._db;
@@ -483,14 +830,16 @@ function injetarCrise(){
       numero: num,
       titulo: titulo,
       texto: texto,
+      destinatario: dest,
+      destinatarioLabel: destLabel,
       missao: mission,
       timestamp: serverTimestamp(),
-      tipo: 'crise'
+      tipo: 'crise',
+      origem: 'personalizada'
     }).then(function(){
-      status.textContent = '✅ Crise injetada! Aparecerá para todos os alunos.';
+      status.textContent = '✅ Crise injetada com sucesso!';
       status.style.color = 'var(--green4)';
-      addFeed('CRISE','Professor','⚠️ Crise Nº '+num+' injetada: '+titulo,'alert');
-      // Incrementar número para próxima
+      addFeed('CRISE-CUSTOM','Professor','⚠️ Crise Nº '+num+' "'+titulo+'" → '+destLabel,'alert');
       var next = String(parseInt(num)+1).padStart(3,'0');
       document.getElementById('criseNum').value = next;
       setTimeout(function(){ status.textContent=''; }, 5000);
@@ -504,6 +853,7 @@ function injetarCrise(){
   }
 }
 
+// ── SEED DEMO ─────────────────────────────────────────────────────────
 function seedDemo(){
   const mock=[
     {id:'zhukov',count:8,dir:3},{id:'vasilevsky',count:6,dir:2},{id:'shumilov',count:5,dir:2},
@@ -521,6 +871,7 @@ function seedDemo(){
 }
 
 seedDemo();
+renderCrises();
 </script>
 </body>
 </html>
