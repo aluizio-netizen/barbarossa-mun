@@ -175,9 +175,31 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2)}
 @media(max-width:900px){.right{display:none}}
 @media(max-width:600px){.left{width:180px}}
+#gateOverlay{position:fixed;inset:0;background:#0f0e0c;color:#e8e3d5;display:flex;align-items:center;justify-content:center;z-index:99999;font-family:Georgia,serif;font-size:13px;letter-spacing:2px;text-align:center;padding:24px}
+body.gate-ok #gateOverlay{display:none}
 </style>
+<script>
+(async function(){
+  function setMsg(m){ var el=document.getElementById('gateOverlay'); if(el) el.textContent=m; }
+  function bail(m){ setMsg(m); setTimeout(function(){ location.replace('professor.html'); }, 800); }
+  document.addEventListener('DOMContentLoaded', async function(){
+    const t = sessionStorage.getItem('teacher_password');
+    if (!t) { bail('REDIRECIONANDO PARA LOGIN…'); return; }
+    setMsg('VALIDANDO ACESSO…');
+    try {
+      const r = await fetch('/.netlify/functions/teacher-auth', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+t}
+      });
+      if (r.status !== 200) { sessionStorage.removeItem('teacher_password'); bail('ACESSO NEGADO — REDIRECIONANDO…'); return; }
+      document.body.classList.add('gate-ok');
+    } catch(_) { bail('SERVIDOR INDISPONÍVEL — REDIRECIONANDO…'); }
+  });
+})();
+</script>
 </head>
 <body>
+<div id="gateOverlay">CARREGANDO…</div>
 
 <div class="hdr">
   <div class="hdr-star">☭</div>

@@ -10,4 +10,4 @@
 # Aqui dizemos ao scanner de segredos do Netlify para ignorar exatamente
 # esse valor (e somente ele).
 [build.environment]
-  SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES = "AIzaSyCOMmKs-WXGbx-CseFBaD7ISB6HZjBoamk"
+  SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES = "AIzaSyCOMmKs-WXGbx-CseFBaD7ISB6HZjBoamk,AIzaSyDAebTSplrmE5n9evLmRvJFzgI3pxBW_sQ"

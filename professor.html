@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Painel do Professor · Barbarossa-MUN</title>
+<style>
+  :root { --bg:#0f0e0c; --panel:#1a1815; --border:#2a2722; --text:#e8e3d5; --muted:#8a8378; --accent:#b8956a; --red:#d44040; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; background:var(--bg); color:var(--text); font-family: Georgia, 'Times New Roman', serif; display:flex; align-items:center; justify-content:center; padding:24px; }
+  .wrap { max-width: 720px; width:100%; }
+  h1 { font-size: 28px; letter-spacing: 2px; text-align:center; margin: 0 0 6px; color: var(--accent); }
+  .sub { text-align:center; color: var(--muted); font-size: 12px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 36px; }
+  .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+  a.card { display:block; background: var(--panel); border:1px solid var(--border); padding: 22px; border-radius: 4px; text-decoration:none; color: var(--text); transition: border-color .15s, transform .15s; }
+  a.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .card h2 { margin: 0 0 8px; font-size: 18px; color: var(--accent); letter-spacing: 1px; }
+  .card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+  .ftr { text-align:center; color: var(--muted); font-size: 11px; margin-top: 36px; }
+
+  .modal-overlay { position:fixed; inset:0; background: rgba(0,0,0,0.85); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px; }
+  .modal-overlay.hidden { display:none; }
+  .modal { background: var(--panel); border:1px solid var(--border); padding: 28px; max-width: 420px; width:100%; border-radius: 4px; }
+  .modal h2 { margin: 0 0 10px; font-size: 18px; color: var(--accent); letter-spacing: 1px; }
+  .modal p { margin: 0 0 16px; color: var(--muted); font-size: 13px; }
+  .modal input { width:100%; background: var(--bg); border:1px solid var(--border); color: var(--text); padding: 10px 12px; font-family: inherit; font-size: 14px; margin-bottom: 12px; }
+  .modal input:focus { outline:none; border-color: var(--accent); }
+  .modal-btn { width:100%; background: var(--accent); color: var(--bg); border:none; padding: 10px; font-family: inherit; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; cursor: pointer; }
+  .modal-btn:hover { opacity: 0.9; }
+  .err { color: var(--red); font-size: 12px; margin-top: 8px; display:none; }
+  #hub { display:none; }
+  #hub.visible { display:block; }
+</style>
+</head>
+<body>
+
+<div class="modal-overlay" id="modalLogin">
+  <div class="modal">
+    <h2>🎖️ ACESSO DO PROFESSOR</h2>
+    <p>Insira a senha de professor para acessar os painéis de monitoramento.</p>
+    <input type="password" id="loginInput" placeholder="Senha de professor..." onkeydown="if(event.key==='Enter')submitLogin()" autofocus/>
+    <button class="modal-btn" onclick="submitLogin()">AUTORIZAR ACESSO →</button>
+    <div class="err" id="loginError">Senha incorreta.</div>
+  </div>
+</div>
+
+<div class="wrap" id="hub">
+  <h1>PAINEL DO PROFESSOR</h1>
+  <div class="sub">Monitoramento · Barbarossa-MUN</div>
+  <div class="grid">
+    <a class="card" href="professor-barbarossa.html">
+      <h2>⚔️ Painel · Op. Barbarossa</h2>
+      <p>Acompanhamento ao vivo das atividades dos alunos na simulação da Frente Oriental (1941).</p>
+    </a>
+    <a class="card" href="professor_painel.html">
+      <h2>🛡️ Painel · Op. Urano</h2>
+      <p>Visão geral, feed ao vivo, detalhe por oficial e banco de crises para Stalingrado (1942).</p>
+    </a>
+  </div>
+  <div class="ftr">Sessão de professor · sai ao fechar o navegador</div>
+</div>
+
+<script>
+const TEACHER_KEY = 'teacher_password';
+
+async function validateToken(token) {
+  try {
+    const r = await fetch('/.netlify/functions/teacher-auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }
+    });
+    return r.status === 200;
+  } catch(_) { return false; }
+}
+
+async function submitLogin() {
+  const v = document.getElementById('loginInput').value.trim();
+  const err = document.getElementById('loginError');
+  if (!v) { err.textContent = 'Digite a senha.'; err.style.display = 'block'; return; }
+  err.style.display = 'none';
+  const ok = await validateToken(v);
+  if (!ok) { err.textContent = 'Senha incorreta.'; err.style.display = 'block'; return; }
+  sessionStorage.setItem(TEACHER_KEY, v);
+  document.getElementById('modalLogin').classList.add('hidden');
+  document.getElementById('hub').classList.add('visible');
+}
+
+(async function init() {
+  const existing = sessionStorage.getItem(TEACHER_KEY);
+  if (existing && await validateToken(existing)) {
+    document.getElementById('modalLogin').classList.add('hidden');
+    document.getElementById('hub').classList.add('visible');
+  } else {
+    sessionStorage.removeItem(TEACHER_KEY);
+    document.getElementById('loginInput').focus();
+  }
+})();
+</script>
+</body>
+</html>
