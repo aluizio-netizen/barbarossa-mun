@@ -291,15 +291,14 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
   </div>
 </div>
 
-<!-- MODAL: API KEY -->
-<div class="modal-overlay hidden" id="modalApi">
+<!-- MODAL: LOGIN -->
+<div class="modal-overlay hidden" id="modalLogin">
   <div class="modal">
-    <h2>🔑 CHAVE DE ACESSO</h2>
-    <p>Insira a chave de API fornecida pelo professor para ativar o assistente estratégico de IA.</p>
-    <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..."/>
-    <button class="modal-btn" onclick="saveApiKey()">⚡ AUTORIZAR ACESSO</button>
-    <button class="modal-btn" onclick="skipApiKey()" style="background:transparent;border:1px solid var(--border2);color:var(--muted);margin-top:6px">Pular por agora (sem IA)</button>
-    <div class="modal-note">Chave fornecida pelo professor · console.anthropic.com</div>
+    <h2>🔑 SENHA DE ACESSO</h2>
+    <p>Insira a senha fornecida pelo professor para acessar a simulação.</p>
+    <input type="password" id="loginInput" placeholder="Senha de acesso..." onkeydown="if(event.key==='Enter')submitLogin()"/>
+    <button class="modal-btn" onclick="submitLogin()">⚡ AUTORIZAR ACESSO</button>
+    <div class="modal-note" id="loginError" style="color:#d44040;display:none">Senha incorreta.</div>
   </div>
 </div>
 
@@ -317,7 +316,6 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
   <div class="badge soviet">SECRETO</div>
   <div class="hdr-right">
     <span style="font-size:9px;color:var(--muted)" id="hdrStudent">—</span>
-    <button class="hdr-btn" onclick="document.getElementById('modalApi').classList.remove('hidden')">🔑 API</button>
     <div class="hdr-date" id="hdrDate">19 NOV 1942 · 03:00h</div>
   </div>
 </div>
@@ -677,7 +675,9 @@ document.getElementById('fbBadge').innerHTML = '<div class="fb-dot"></div><span>
 </script>
 
 <script>
-let API_KEY = localStorage.getItem('barb_api_key') || '';
+const SESSION_KEY = 'app_password';
+let APP_PASSWORD = sessionStorage.getItem(SESSION_KEY) || '';
+try { localStorage.removeItem('barb_api_key'); } catch(_) {}
 let studentName = '', studentCode = 'urano-geral';
 let curDay = 0, cur = 'zhukov', hist = [];
 let lastDirectiveText = '', lastAnalysisText = '', lastReplyText = '';
@@ -725,7 +725,7 @@ function saveStudentName() {
       var dfFrom = document.getElementById('dirFrom');
       if (dfFrom) { for (var i=0; i<dfFrom.options.length; i++) { if (dfFrom.options[i].value === selfVal) { dfFrom.options[i].selected = true; break; } } }
     }
-    if (!API_KEY) document.getElementById('modalApi').classList.remove('hidden');
+    if (!APP_PASSWORD) document.getElementById('modalLogin').classList.remove('hidden');
     try { fbLog('entrou', { nome: n, representacao: selfVal }); } catch(fe) {}
   } catch(err) {
     console.error('Login erro:', err);
@@ -733,16 +733,26 @@ function saveStudentName() {
   }
 }
 
-function saveApiKey() {
-  var k = document.getElementById('apiKeyInput').value.trim();
-  if (!k.startsWith('sk-ant-')) { alert('Chave inválida. Deve começar com sk-ant-'); return; }
-  API_KEY = k;
-  localStorage.setItem('barb_api_key', k);
-  document.getElementById('modalApi').classList.add('hidden');
-}
-
-function skipApiKey() {
-  document.getElementById('modalApi').classList.add('hidden');
+async function submitLogin() {
+  var v = document.getElementById('loginInput').value.trim();
+  var err = document.getElementById('loginError');
+  if (!v) { err.textContent = 'Digite a senha.'; err.style.display = 'block'; return; }
+  err.style.display = 'none';
+  try {
+    var r = await fetch('/.netlify/functions/proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + v },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1, system: 'ping', messages: [{role:'user', content:'ping'}] })
+    });
+    if (r.status === 401) { err.textContent = 'Senha incorreta.'; err.style.display = 'block'; return; }
+    if (r.status === 403) { err.textContent = 'Origem não autorizada.'; err.style.display = 'block'; return; }
+    APP_PASSWORD = v;
+    sessionStorage.setItem(SESSION_KEY, v);
+    document.getElementById('modalLogin').classList.add('hidden');
+  } catch(e) {
+    err.textContent = 'Falha ao verificar senha. Tente novamente.';
+    err.style.display = 'block';
+  }
 }
 
 function checkInit() {
@@ -761,7 +771,7 @@ function checkInit() {
         if (btn) { document.querySelectorAll('.dbtn').forEach(function(b){b.classList.remove('active');}); btn.classList.add('active'); cur = selfVal; }
         if (D && D[selfVal]) document.getElementById('sideRole').textContent = D[selfVal].name || 'Oficial';
       }
-      if (!API_KEY) document.getElementById('modalApi').classList.remove('hidden');
+      if (!APP_PASSWORD) document.getElementById('modalLogin').classList.remove('hidden');
     }
   } catch(err) { console.warn('checkInit erro:', err); }
 }
@@ -790,11 +800,17 @@ async function fbLog(tipo, dados) {
 }
 
 async function callClaude(system, messages, max_tokens) {
-  const r = await fetch('https://api.anthropic.com/v1/messages', {
+  const r = await fetch('/.netlify/functions/proxy', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'anthropic-version': '2023-06-01', 'x-api-key': API_KEY, 'anthropic-dangerous-direct-browser-access': 'true' },
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + APP_PASSWORD },
     body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: max_tokens || 1000, system, messages })
   });
+  if (r.status === 401) {
+    sessionStorage.removeItem(SESSION_KEY);
+    APP_PASSWORD = '';
+    document.getElementById('modalLogin').classList.remove('hidden');
+    throw new Error('Sessão expirada — refaça o login.');
+  }
   if (!r.ok) { const e = await r.text(); throw new Error('API ' + r.status + ': ' + e.substring(0, 100)); }
   const d = await r.json();
   return d.content?.map(c => c.text || '').join('') || '';

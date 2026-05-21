@@ -166,13 +166,13 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
   </div>
 </div>
 
-<div class="modal-overlay hidden" id="modalApi">
+<div class="modal-overlay hidden" id="modalLogin">
   <div class="modal">
-    <h2>🔑 CHAVE DE ACESSO</h2>
-    <p>Insira sua chave de API da Anthropic para ativar o assistente estratégico.</p>
-    <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..."/>
-    <button class="modal-btn" onclick="saveApiKey()">AUTORIZAR ACESSO →</button>
-    <div class="modal-note">Obtenha em console.anthropic.com → API Keys</div>
+    <h2>🔑 SENHA DE ACESSO</h2>
+    <p>Insira a senha fornecida pelo professor para acessar a simulação.</p>
+    <input type="password" id="loginInput" placeholder="Senha de acesso..." onkeydown="if(event.key==='Enter')submitLogin()"/>
+    <button class="modal-btn" onclick="submitLogin()">AUTORIZAR ACESSO →</button>
+    <div class="modal-note" id="loginError" style="color:#d44040;display:none">Senha incorreta.</div>
   </div>
 </div>
 
@@ -187,7 +187,6 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
   <div class="badge">RESERVADO</div>
   <div class="hdr-right">
     <span style="font-size:9px;color:var(--muted)" id="hdrStudent">—</span>
-    <button class="hdr-btn" onclick="document.getElementById('modalApi').classList.remove('hidden')">🔑 API</button>
     <div class="hdr-date" id="hdrDate">22 JUN 1941 · 03:15h</div>
   </div>
 </div>
@@ -355,7 +354,9 @@ document.getElementById('fbBadge').innerHTML = '<div class="fb-dot"></div><span>
 </script>
 
 <script>
-let API_KEY = localStorage.getItem('barb_api_key') || '';
+const SESSION_KEY = 'app_password';
+let APP_PASSWORD = sessionStorage.getItem(SESSION_KEY) || '';
+try { localStorage.removeItem('barb_api_key'); } catch(_) {}
 let studentName = '', studentCode = 'missao-geral';
 let curDay = 0, cur = 'hitler', hist = [];
 let lastDirectiveText = '', lastAnalysisText = '', lastReplyText = '';
@@ -372,15 +373,30 @@ function saveStudentName() {
   document.getElementById('hdrStudent').textContent = n;
   document.getElementById('sideStudent').textContent = n;
   document.getElementById('sideMission').textContent = studentCode;
-  if (!API_KEY) document.getElementById('modalApi').classList.remove('hidden');
+  if (!APP_PASSWORD) document.getElementById('modalLogin').classList.remove('hidden');
   fbLog('entrou', { nome: n });
 }
 
-function saveApiKey() {
-  const k = document.getElementById('apiKeyInput').value.trim();
-  if (!k.startsWith('sk-ant-')) { alert('Chave inválida.'); return; }
-  API_KEY = k; localStorage.setItem('barb_api_key', k);
-  document.getElementById('modalApi').classList.add('hidden');
+async function submitLogin() {
+  const v = document.getElementById('loginInput').value.trim();
+  const err = document.getElementById('loginError');
+  if (!v) { err.textContent = 'Digite a senha.'; err.style.display = 'block'; return; }
+  err.style.display = 'none';
+  try {
+    const r = await fetch('/.netlify/functions/proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + v },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1, system: 'ping', messages: [{role:'user', content:'ping'}] })
+    });
+    if (r.status === 401) { err.textContent = 'Senha incorreta.'; err.style.display = 'block'; return; }
+    if (r.status === 403) { err.textContent = 'Origem não autorizada.'; err.style.display = 'block'; return; }
+    APP_PASSWORD = v;
+    sessionStorage.setItem(SESSION_KEY, v);
+    document.getElementById('modalLogin').classList.add('hidden');
+  } catch(e) {
+    err.textContent = 'Falha ao verificar senha. Tente novamente.';
+    err.style.display = 'block';
+  }
 }
 
 function checkInit() {
@@ -391,7 +407,7 @@ function checkInit() {
     document.getElementById('hdrStudent').textContent = n;
     document.getElementById('sideStudent').textContent = n;
     document.getElementById('sideMission').textContent = studentCode;
-    if (!API_KEY) document.getElementById('modalApi').classList.remove('hidden');
+    if (!APP_PASSWORD) document.getElementById('modalLogin').classList.remove('hidden');
   }
 }
 
@@ -412,11 +428,17 @@ async function fbLog(tipo, dados) {
 }
 
 async function callClaude(system, messages, max_tokens) {
-  const r = await fetch('https://api.anthropic.com/v1/messages', {
+  const r = await fetch('/.netlify/functions/proxy', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'anthropic-version': '2023-06-01', 'x-api-key': API_KEY, 'anthropic-dangerous-direct-browser-access': 'true' },
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + APP_PASSWORD },
     body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: max_tokens || 900, system, messages })
   });
+  if (r.status === 401) {
+    sessionStorage.removeItem(SESSION_KEY);
+    APP_PASSWORD = '';
+    document.getElementById('modalLogin').classList.remove('hidden');
+    throw new Error('Sessão expirada — refaça o login.');
+  }
   if (!r.ok) { const e = await r.text(); throw new Error('API ' + r.status + ': ' + e.substring(0, 80)); }
   const d = await r.json();
   return d.content?.map(c => c.text || '').join('') || '';
