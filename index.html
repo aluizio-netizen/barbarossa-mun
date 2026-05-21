@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Barbarossa-MUN · Simulações</title>
+<style>
+  :root { --bg:#0f0e0c; --panel:#1a1815; --border:#2a2722; --text:#e8e3d5; --muted:#8a8378; --accent:#b8956a; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; background:var(--bg); color:var(--text); font-family: Georgia, 'Times New Roman', serif; display:flex; align-items:center; justify-content:center; padding:24px; }
+  .wrap { max-width: 720px; width:100%; }
+  h1 { font-size: 28px; letter-spacing: 2px; text-align:center; margin: 0 0 6px; color: var(--accent); }
+  .sub { text-align:center; color: var(--muted); font-size: 12px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 36px; }
+  .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+  a.card { display:block; background: var(--panel); border:1px solid var(--border); padding: 22px; border-radius: 4px; text-decoration:none; color: var(--text); transition: border-color .15s, transform .15s; }
+  a.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .card h2 { margin: 0 0 8px; font-size: 18px; color: var(--accent); letter-spacing: 1px; }
+  .card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+  .ftr { text-align:center; color: var(--muted); font-size: 11px; margin-top: 36px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>BARBAROSSA-MUN</h1>
+  <div class="sub">Simulação Model UN · Gabinete de Guerra</div>
+  <div class="grid">
+    <a class="card" href="barbarossa.html">
+      <h2>⚔️ Operação Barbarossa</h2>
+      <p>Frente Oriental · 22 de Junho de 1941. Gabinete de Guerra do Eixo. Decisões estratégicas do alto-comando alemão.</p>
+    </a>
+    <a class="card" href="gabinete_urano_alunos.html">
+      <h2>🛡️ Operação Urano</h2>
+      <p>Stalingrado · 19 de Novembro de 1942. Gabinete de Guerra Soviético. Cerco e contraofensiva do Exército Vermelho.</p>
+    </a>
+  </div>
+  <div class="ftr">Internationali Negotia · MUN</div>
+</div>
+</body>
+</html>

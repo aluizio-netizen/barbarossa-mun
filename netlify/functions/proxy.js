@@ -7,7 +7,7 @@ const MAX_BODY_BYTES = 32 * 1024;
 const ALLOWED_ORIGINS = [
   'http://localhost:8888',
   'http://localhost:3999',
-  'https://barbarossa-mun.netlify.app'
+  'https://barbarossa-urano.netlify.app'
 ];
 
 function corsHeaders(origin) {
