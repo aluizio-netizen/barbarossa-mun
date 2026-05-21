@@ -70,8 +70,16 @@ async function validateToken(token) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }
     });
-    return r.status === 200;
-  } catch(_) { return false; }
+    return { status: r.status };
+  } catch(_) { return { status: 0 }; }
+}
+
+function msgFor(status) {
+  if (status === 401) return 'Senha incorreta.';
+  if (status === 403) return 'Origem não autorizada (CORS).';
+  if (status === 500) return 'Servidor mal configurado: variável TEACHER_PASSWORD ausente no Netlify. Adicione e refaça o deploy.';
+  if (status === 0)   return 'Sem conexão com o servidor. Tente novamente.';
+  return 'Erro inesperado (status ' + status + ').';
 }
 
 async function submitLogin() {
@@ -79,8 +87,8 @@ async function submitLogin() {
   const err = document.getElementById('loginError');
   if (!v) { err.textContent = 'Digite a senha.'; err.style.display = 'block'; return; }
   err.style.display = 'none';
-  const ok = await validateToken(v);
-  if (!ok) { err.textContent = 'Senha incorreta.'; err.style.display = 'block'; return; }
+  const { status } = await validateToken(v);
+  if (status !== 200) { err.textContent = msgFor(status); err.style.display = 'block'; return; }
   sessionStorage.setItem(TEACHER_KEY, v);
   document.getElementById('modalLogin').classList.add('hidden');
   document.getElementById('hub').classList.add('visible');
@@ -88,13 +96,16 @@ async function submitLogin() {
 
 (async function init() {
   const existing = sessionStorage.getItem(TEACHER_KEY);
-  if (existing && await validateToken(existing)) {
-    document.getElementById('modalLogin').classList.add('hidden');
-    document.getElementById('hub').classList.add('visible');
-  } else {
+  if (existing) {
+    const { status } = await validateToken(existing);
+    if (status === 200) {
+      document.getElementById('modalLogin').classList.add('hidden');
+      document.getElementById('hub').classList.add('visible');
+      return;
+    }
     sessionStorage.removeItem(TEACHER_KEY);
-    document.getElementById('loginInput').focus();
   }
+  document.getElementById('loginInput').focus();
 })();
 </script>
 </body>

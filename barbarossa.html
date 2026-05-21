@@ -388,13 +388,19 @@ async function submitLogin() {
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + v },
       body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1, system: 'ping', messages: [{role:'user', content:'ping'}] })
     });
-    if (r.status === 401) { err.textContent = 'Senha incorreta.'; err.style.display = 'block'; return; }
-    if (r.status === 403) { err.textContent = 'Origem não autorizada.'; err.style.display = 'block'; return; }
-    APP_PASSWORD = v;
-    sessionStorage.setItem(SESSION_KEY, v);
-    document.getElementById('modalLogin').classList.add('hidden');
+    if (r.status === 200) {
+      APP_PASSWORD = v;
+      sessionStorage.setItem(SESSION_KEY, v);
+      document.getElementById('modalLogin').classList.add('hidden');
+      return;
+    }
+    if (r.status === 401) err.textContent = 'Senha incorreta.';
+    else if (r.status === 403) err.textContent = 'Origem não autorizada (CORS).';
+    else if (r.status === 500) err.textContent = 'Servidor mal configurado: variável ausente no Netlify.';
+    else err.textContent = 'Erro inesperado (status ' + r.status + ').';
+    err.style.display = 'block';
   } catch(e) {
-    err.textContent = 'Falha ao verificar senha. Tente novamente.';
+    err.textContent = 'Sem conexão com o servidor. Tente novamente.';
     err.style.display = 'block';
   }
 }

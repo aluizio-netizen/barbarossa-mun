@@ -45,7 +45,7 @@ exports.handler = async (event) => {
     return json(403, { error: 'origin_not_allowed' }, origin);
   }
 
-  const teacherPassword = process.env.TEACHER_PASSWORD;
+  const teacherPassword = (process.env.TEACHER_PASSWORD || '').trim();
   if (!teacherPassword) {
     return json(500, { error: 'server_misconfigured' }, origin);
   }

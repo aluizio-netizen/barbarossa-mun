@@ -50,8 +50,8 @@ exports.handler = async (event) => {
     return json(403, { error: 'origin_not_allowed' }, origin);
   }
 
-  const appPassword = process.env.APP_PASSWORD;
-  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  const appPassword = (process.env.APP_PASSWORD || '').trim();
+  const anthropicKey = (process.env.ANTHROPIC_API_KEY || '').trim();
   if (!appPassword || !anthropicKey) {
     return json(500, { error: 'server_misconfigured' }, origin);
   }
