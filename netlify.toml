@@ -1,0 +1,13 @@
+[build]
+  publish = "."
+
+[functions]
+  directory = "netlify/functions"
+
+# A Firebase web apiKey ("AIza...") aparece hardcoded nos HTMLs por design —
+# o Firebase web SDK exige esse identificador no cliente, e a segurança real
+# é feita pelas Firebase Security Rules no servidor, não por essa chave.
+# Aqui dizemos ao scanner de segredos do Netlify para ignorar exatamente
+# esse valor (e somente ele).
+[build.environment]
+  SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES = "AIzaSyCOMmKs-WXGbx-CseFBaD7ISB6HZjBoamk"
